@@ -1,8 +1,16 @@
 import React, { useState } from "react";
-import { ExternalLinkIcon, CodeIcon, UsersIcon, BookOpenIcon, CalendarIcon } from "lucide-react";
+
+import { ExternalLinkIcon, CodeIcon, UsersIcon, BookOpenIcon, CalendarIcon, LaptopIcon } from "lucide-react";
 import { motion } from 'framer-motion';
 
 const researchResources = [
+    {
+        title: "USB Student Projects Board",
+        link: "/projects", 
+        description: "A live, centralized database of approved student research projects, tech initiatives, and collaborative opportunities within the department.",
+        help: "If you want to apply to join research on campus.",
+        icon: <LaptopIcon className="w-5 h-5" />
+    },
     {
         title: "Undergraduate Research Opportunities with CS Professor",
         link: "https://www.cs.purdue.edu/corporate/employment/cs%20research.html",
@@ -91,6 +99,7 @@ export default function CSSpecificResearchPage() {
                                     </motion.div>
                                     <motion.a 
                                         href={resource.link} 
+                                        // If it's an internal link, you can optionally remove target="_blank" so it doesn't open a new tab!
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="text-xl font-bold text-green-400 hover:text-green-300 transition-colors flex items-center underline"

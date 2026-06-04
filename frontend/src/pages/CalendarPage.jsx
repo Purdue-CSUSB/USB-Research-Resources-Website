@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion } from 'framer-motion';
 
 export default function CalendarPage() {
-    const calendarId = '88e0056451d336ea63dbb2cfc2ae5691fb511e40dbcc5e5d79dc6ed439fb7337@group.calendar.google.com'
+    const calendarId = '88217dfcf4bcf746ad4132d93a9e0047a0c75e246d22dcb07fd75a8798ba0e65@group.calendar.google.com'
     const timeZone = 'America%2FIndiana%2FIndianapolis'
     const [isHovered, setIsHovered] = useState(false);
     

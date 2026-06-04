@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X } from 'lucide-react'
+import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function NavBar() {
@@ -8,6 +8,7 @@ export default function NavBar() {
     const currentPath = location.pathname
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [hoveredIndex, setHoveredIndex] = useState(null)
+    
     const isActive = (path) => {
         if (path === '/') {
             return currentPath === '/' || currentPath === ''
@@ -22,6 +23,16 @@ export default function NavBar() {
     const closeMenu = () => {
         setIsMenuOpen(false)
     }
+
+    const navLinks = [
+        { path: '/', icon: Home, label: 'Home' },
+        { path: '/faq', icon: HelpCircle, label: 'FAQ' },
+        { path: '/organizations-and-programs', icon: Building2, label: 'Programs' },
+        { path: '/cs-specific-research', icon: Code, label: 'CS Research' },
+        { path: '/presenting-your-research', icon: Presentation, label: 'Presenting' },
+        { path: '/projects', icon: Beaker, label: 'Projects' },
+        { path: '/calendar', icon: Calendar, label: 'Calendar' }
+    ];
 
     return (
         <motion.nav 
@@ -48,14 +59,7 @@ export default function NavBar() {
                     </motion.div>
 
                     <div className="hidden md:flex space-x-3">
-                        {[
-                            { path: '/', icon: Home, label: 'Home' },
-                            { path: '/faq', icon: HelpCircle, label: 'FAQ' },
-                            { path: '/organizations-and-programs', icon: Building2, label: 'Programs' },
-                            { path: '/cs-specific-research', icon: Code, label: 'CS Research' },
-                            { path: '/presenting-your-research', icon: Presentation, label: 'Presenting' },
-                            { path: '/calendar', icon: Calendar, label: 'Calendar' }
-                        ].map((item, index) => {
+                        {navLinks.map((item, index) => {
                             const Icon = item.icon
                             return (
                                 <motion.div
@@ -128,14 +132,7 @@ export default function NavBar() {
                             transition={{ duration: 0.3 }}
                         >
                             <div className="flex flex-col space-y-2 pt-4">
-                                {[
-                                    { path: '/', icon: Home, label: 'Home' },
-                                    { path: '/faq', icon: HelpCircle, label: 'FAQ' },
-                                    { path: '/organizations-and-programs', icon: Building2, label: 'Programs' },
-                                    { path: '/cs-specific-research', icon: Code, label: 'CS Research' },
-                                    { path: '/presenting-your-research', icon: Presentation, label: 'Presenting' },
-                                    { path: '/calendar', icon: Calendar, label: 'Calendar' }
-                                ].map((item, index) => {
+                                {navLinks.map((item, index) => {
                                     const Icon = item.icon
                                     return (
                                         <motion.div

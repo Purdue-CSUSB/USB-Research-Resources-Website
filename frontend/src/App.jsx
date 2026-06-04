@@ -11,6 +11,8 @@ import CSSpecificResearchPage from "./pages/CSSpecificResearchPage.jsx"
 import NotFoundPage from "./pages/NotFoundPage.jsx"
 
 
+import ResearchProjects from "./pages/ResearchProjects.jsx"
+
 function ScrollToTop() {
     const { pathname } = useLocation()
 
@@ -49,6 +51,10 @@ function AppRoutes() {
                     <Route path="/calendar" element={<PageWrapper><CalendarPage /></PageWrapper>}/>
                     <Route path="/presenting-your-research" element={<PageWrapper><PresentingYourResearchPage /></PageWrapper>} />
                     <Route path="/cs-specific-research" element={<PageWrapper><CSSpecificResearchPage /></PageWrapper>} />
+                    
+                    
+                    <Route path="/projects" element={<PageWrapper><ResearchProjects /></PageWrapper>} />
+                    
                     <Route path="*" element={<PageWrapper><NotFoundPage /></PageWrapper>} />
                 </Routes>
             </AnimatePresence>
