@@ -1,9 +1,19 @@
 {
-  "rewrites": [
+  "crons": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "path": "/api/scrape-events",
+      "schedule": "0 8 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/submit-project",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "http://localhost:3000" 
+        }
+      ]
     }
   ]
 }
-
