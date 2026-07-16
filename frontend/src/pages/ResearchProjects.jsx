@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ResearchProjects = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, isAdmin, token } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); 
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // State for live database projects
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [formData, setFormData] = useState({
-    title: '', description: '', techStack: '', rolesNeeded: '', requirements: '', 
-    timeCommitment: '', compensation: '', deadline: '', manager: '', email: ''
+    title: '', description: '', techStack: '', rolesNeeded: '', requirements: '',
+    timeCommitment: '', compensation: '', deadline: '', manager: ''
   });
 
   // Fetch projects from MongoDB on load
@@ -38,26 +42,33 @@ const ResearchProjects = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    
-    if (!formData.email.endsWith('@purdue.edu')) {
-      alert("Nice try! You must use a valid @purdue.edu email to post a project.");
-      return;
-    }
+    e.preventDefault();
 
     setIsSubmitting(true);
 
     try {
       const response = await fetch('/api/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data = {};
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        data = { message: responseText || 'Failed to submit project.' };
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to submit project.");
+        const stageInfo = data.stage ? ` [${data.stage}]` : '';
+        const detailInfo = data.details ? ` ${typeof data.details === 'string' ? data.details : JSON.stringify(data.details)}` : '';
+        throw new Error(`${data.message || "Failed to submit project."}${stageInfo}${detailInfo}`);
       }
       
       alert("Project passed moderation and was saved permanently!");
@@ -72,9 +83,9 @@ const ResearchProjects = () => {
 
       setProjects([newProjectForBoard, ...projects]);
       setIsModalOpen(false);
-      setFormData({ 
-        title: '', description: '', techStack: '', rolesNeeded: '', requirements: '', 
-        timeCommitment: '', compensation: '', deadline: '', manager: '', email: '' 
+      setFormData({
+        title: '', description: '', techStack: '', rolesNeeded: '', requirements: '',
+        timeCommitment: '', compensation: '', deadline: '', manager: ''
       });
       
     } catch (error) {
@@ -83,6 +94,35 @@ const ResearchProjects = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDelete = async (projectId) => {
+    if (!window.confirm("Delete this project permanently?")) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to delete project.");
+      }
+
+      setProjects(projects.filter((p) => p._id !== projectId));
+    } catch (error) {
+      console.error("Delete Error:", error);
+      alert(error.message || "Failed to delete project.");
+    }
+  };
+
+  const handleOpenModal = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    setIsModalOpen(true);
   };
 
   return (
@@ -97,10 +137,10 @@ const ResearchProjects = () => {
             Looking to get involved in undergrad research? Browse open projects below, check out the tech stacks, and reach out directly to the project managers to join the team.
           </p>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenModal}
             className="mt-6 px-6 py-3 rounded-lg font-semibold bg-green-600 text-white shadow-lg hover:bg-green-500 hover:shadow-green-900/20 transition-all duration-200 transform hover:-translate-y-0.5"
           >
-            Post a New Project
+            {isAuthenticated ? 'Post a New Project' : 'Log In to Post a Project'}
           </button>
         </div>
 
@@ -163,10 +203,19 @@ const ResearchProjects = () => {
                     <p className="text-sm text-gray-400">
                       Led by: <span className="font-semibold text-white">{project.manager}</span>
                     </p>
-                    <div className="flex items-center justify-between">
-                      <a href={mailtoLink} className="px-4 py-2 bg-green-600/10 hover:bg-green-600 border border-green-600/30 hover:border-green-500 text-green-400 hover:text-white rounded-lg text-sm font-semibold transition-all duration-200 text-center">
+                    <div className="flex items-center justify-between gap-2">
+                      <a href={mailtoLink} className="flex-grow px-4 py-2 bg-green-600/10 hover:bg-green-600 border border-green-600/30 hover:border-green-500 text-green-400 hover:text-white rounded-lg text-sm font-semibold transition-all duration-200 text-center">
                         Apply via Email
                       </a>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDelete(project._id)}
+                          title="Admin: delete this project"
+                          className="px-3 py-2 bg-gray-800/60 hover:bg-red-600 border border-gray-700/50 hover:border-red-500 text-gray-500 hover:text-white rounded-lg text-sm transition-all duration-200"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -227,7 +276,7 @@ const ResearchProjects = () => {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">App Deadline</label>
                   <input required type="date" name="deadline" value={formData.deadline} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors [color-scheme:dark]" />
@@ -235,10 +284,6 @@ const ResearchProjects = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Project Manager</label>
                   <input required type="text" name="manager" value={formData.manager} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors" placeholder="Pete Purdue" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Contact Email</label>
-                  <input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors" placeholder="pete@purdue.edu" />
                 </div>
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-gray-800 mt-6 sticky bottom-0 bg-gray-900 pb-2">

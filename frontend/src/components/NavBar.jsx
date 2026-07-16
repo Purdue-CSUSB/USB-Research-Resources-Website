@@ -1,13 +1,22 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker, User, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function NavBar() {
     const location = useLocation()
+    const navigate = useNavigate()
+    const { isAuthenticated, user, logout } = useAuth()
     const currentPath = location.pathname
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [hoveredIndex, setHoveredIndex] = useState(null)
+
+    const handleLogout = () => {
+        logout()
+        navigate('/')
+        closeMenu()
+    }
     
     const isActive = (path) => {
         if (path === '/') {
@@ -89,6 +98,30 @@ export default function NavBar() {
                                 </motion.div>
                             )
                         })}
+
+                        {isAuthenticated ? (
+                            <div className="flex items-center space-x-2 pl-2 ml-2 border-l border-gray-700">
+                                <span className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-300">
+                                    <User className="w-4 h-4" />
+                                    <span>{user?.username}</span>
+                                </span>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-all duration-200"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span>Log Out</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ml-2 ${isActive('/login') || isActive('/signup') ? 'bg-green-600 text-white shadow-2xl' : 'bg-transparent text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`}
+                            >
+                                <User className="w-4 h-4" />
+                                <span>Log In</span>
+                            </Link>
+                        )}
                     </div>
 
                     <motion.button
@@ -158,6 +191,33 @@ export default function NavBar() {
                                         </motion.div>
                                     )
                                 })}
+
+                                <div className="pt-2 mt-2 border-t border-gray-700">
+                                    {isAuthenticated ? (
+                                        <>
+                                            <div className="flex items-center space-x-2 px-4 py-3 text-sm font-medium text-gray-300">
+                                                <User className="w-4 h-4" />
+                                                <span>{user?.username}</span>
+                                            </div>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-all duration-200 w-full"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                <span>Log Out</span>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <Link
+                                            to="/login"
+                                            onClick={closeMenu}
+                                            className={`flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${isActive('/login') || isActive('/signup') ? 'bg-green-600 text-white shadow-2xl' : 'bg-transparent text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`}
+                                        >
+                                            <User className="w-4 h-4" />
+                                            <span>Log In</span>
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         </motion.div>
                     )}
