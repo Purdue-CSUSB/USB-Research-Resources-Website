@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 
-const TOKEN_TTL = '7d';
+const TOKEN_TTL = '1d';
+// Pin the signing algorithm so a forged token can't request a different alg (e.g. "none").
+const JWT_ALGORITHM = 'HS256';
 
 export function signToken(user) {
   const secret = process.env.JWT_SECRET;
@@ -11,7 +13,7 @@ export function signToken(user) {
   return jwt.sign(
     { userId: user._id.toString(), email: user.email, isAdmin: !!user.isAdmin },
     secret,
-    { expiresIn: TOKEN_TTL }
+    { expiresIn: TOKEN_TTL, algorithm: JWT_ALGORITHM }
   );
 }
 
@@ -28,7 +30,7 @@ export function requireAuth(req, res, next) {
   }
 
   try {
-    const payload = jwt.verify(token, secret);
+    const payload = jwt.verify(token, secret, { algorithms: [JWT_ALGORITHM] });
     req.user = { userId: payload.userId, email: payload.email, isAdmin: !!payload.isAdmin };
     next();
   } catch (error) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker, User, LogOut } from 'lucide-react'
+import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker, User, LogOut, LogIn } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -67,7 +67,7 @@ export default function NavBar() {
                         </Link>
                     </motion.div>
 
-                    <div className="hidden md:flex space-x-3">
+                    <div className="hidden xl:flex space-x-3">
                         {navLinks.map((item, index) => {
                             const Icon = item.icon
                             return (
@@ -116,9 +116,9 @@ export default function NavBar() {
                         ) : (
                             <Link
                                 to="/login"
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ml-2 ${isActive('/login') || isActive('/signup') ? 'bg-green-600 text-white shadow-2xl' : 'bg-transparent text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`}
+                                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold bg-green-600 text-white shadow-lg hover:bg-green-500 hover:shadow-green-900/20 transition-all duration-200 ml-2"
                             >
-                                <User className="w-4 h-4" />
+                                <LogIn className="w-4 h-4" />
                                 <span>Log In</span>
                             </Link>
                         )}
@@ -126,7 +126,7 @@ export default function NavBar() {
 
                     <motion.button
                         onClick={toggleMenu}
-                        className="md:hidden flex items-center p-2 rounded-lg text-gray-300 hover:bg-green-600/20 hover:text-green-400"
+                        className="xl:hidden flex items-center p-2 rounded-lg text-gray-300 hover:bg-green-600/20 hover:text-green-400"
                         whileTap={{ scale: 0.9 }}
                     >
                         <AnimatePresence mode="wait">
@@ -157,8 +157,8 @@ export default function NavBar() {
 
                 <AnimatePresence>
                     {isMenuOpen && (
-                        <motion.div 
-                            className="md:hidden mt-4 pb-4 border-t border-gray-700"
+                        <motion.div
+                            className="xl:hidden mt-4 pb-4 border-t border-gray-700"
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -211,9 +211,9 @@ export default function NavBar() {
                                         <Link
                                             to="/login"
                                             onClick={closeMenu}
-                                            className={`flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${isActive('/login') || isActive('/signup') ? 'bg-green-600 text-white shadow-2xl' : 'bg-transparent text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`}
+                                            className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-semibold bg-green-600 text-white shadow-lg hover:bg-green-500 hover:shadow-green-900/20 transition-all duration-200"
                                         >
-                                            <User className="w-4 h-4" />
+                                            <LogIn className="w-4 h-4" />
                                             <span>Log In</span>
                                         </Link>
                                     )}

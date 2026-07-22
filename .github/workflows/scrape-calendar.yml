@@ -1,0 +1,32 @@
+name: Sync Calendar Events
+
+# Daily scrape of Purdue research events -> Google Calendar.
+# Replaces the old in-process node-cron job that lived in the backend server.
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily (~24h), same time the backend cron used
+  workflow_dispatch: {}    # allow manual runs from the Actions tab
+
+permissions:
+  contents: read           # least privilege: the job only needs to read the repo
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest # Linux runner = 1x billing rate (free on public repos)
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Run calendar scrape
+        run: npm run scrape
+        env:
+          GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
+          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}

@@ -1,16 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext.jsx';
+import ResultModal from '../components/ResultModal.jsx';
+import ConfirmModal from '../components/ConfirmModal.jsx';
+
+// House easing curve used for card entrances across the rest of the site (see card-hover / index.css).
+const HOUSE_EASE = [0.04, 0.62, 0.23, 0.98];
 
 const ResearchProjects = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isAdmin, token } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Drives the styled success/error popup shown after a submission: { type, title, message } | null.
+  const [result, setResult] = useState(null);
+  // Drives the styled confirm dialog for admin deletes: the pending project id, or null.
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   // State for live database projects
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Which card is currently hovered, for the lift/scale effect other pages use. A single
+  // shared value (like NavBar's hoveredIndex) rather than useState-per-card, since this list
+  // is fetched/dynamic-length - calling useState inside .map() would break on the next fetch.
+  const [hoveredProjectId, setHoveredProjectId] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '', description: '', techStack: '', rolesNeeded: '', requirements: '',
@@ -66,18 +80,19 @@ const ResearchProjects = () => {
       }
 
       if (!response.ok) {
-        const stageInfo = data.stage ? ` [${data.stage}]` : '';
-        const detailInfo = data.details ? ` ${typeof data.details === 'string' ? data.details : JSON.stringify(data.details)}` : '';
-        throw new Error(`${data.message || "Failed to submit project."}${stageInfo}${detailInfo}`);
+        // Show a clean, user-friendly reason instead of the raw "[stage] details" string.
+        const message = data.stage === 'moderation'
+          ? "Your project didn't pass our moderation check. Please make sure it's a genuine, professional, tech/research project and try again."
+          : (data.message || "Failed to submit project. Please try again.");
+        setResult({ type: 'error', title: 'Submission Not Approved', message });
+        return;
       }
-      
-      alert("Project passed moderation and was saved permanently!");
-      
+
       // Instantly add the new project to the UI without refreshing the page
       const newProjectForBoard = {
         _id: Date.now().toString(), // Temp ID until refresh
         ...formData,
-        techStack: formData.techStack.split(',').map(tech => tech.trim()), 
+        techStack: formData.techStack.split(',').map(tech => tech.trim()),
         linkedin: "#"
       };
 
@@ -87,17 +102,27 @@ const ResearchProjects = () => {
         title: '', description: '', techStack: '', rolesNeeded: '', requirements: '',
         timeCommitment: '', compensation: '', deadline: '', manager: ''
       });
-      
+      setResult({
+        type: 'success',
+        title: 'Project Posted!',
+        message: 'Your project passed moderation and is now live on the board.'
+      });
+
     } catch (error) {
       console.error("Submission Error:", error);
-      alert(error.message || "Failed to send the project. Please try again.");
+      setResult({
+        type: 'error',
+        title: 'Something Went Wrong',
+        message: "We couldn't reach the server. Please check your connection and try again."
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (projectId) => {
-    if (!window.confirm("Delete this project permanently?")) return;
+  const confirmDelete = async () => {
+    const projectId = pendingDeleteId;
+    setPendingDeleteId(null);
 
     try {
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -113,7 +138,11 @@ const ResearchProjects = () => {
       setProjects(projects.filter((p) => p._id !== projectId));
     } catch (error) {
       console.error("Delete Error:", error);
-      alert(error.message || "Failed to delete project.");
+      setResult({
+        type: 'error',
+        title: 'Delete Failed',
+        message: error.message || "Failed to delete project."
+      });
     }
   };
 
@@ -126,23 +155,33 @@ const ResearchProjects = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-emerald-950 text-gray-100 pt-32 pb-16 px-6 relative">
+    <motion.div
+      className="min-h-screen text-gray-100 pt-20 pb-16 px-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="max-w-7xl mx-auto">
-        
-        <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
-            Research Projects
+
+        <motion.div
+          className="text-center max-w-3xl mx-auto mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Research <span className="text-green-400">Projects</span>
           </h1>
-          <p className="text-lg text-gray-400 max-w-2xl leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8">
             Looking to get involved in undergrad research? Browse open projects below, check out the tech stacks, and reach out directly to the project managers to join the team.
           </p>
-          <button 
+          <button
             onClick={handleOpenModal}
-            className="mt-6 px-6 py-3 rounded-lg font-semibold bg-green-600 text-white shadow-lg hover:bg-green-500 hover:shadow-green-900/20 transition-all duration-200 transform hover:-translate-y-0.5"
+            className="px-6 py-3 rounded-lg font-semibold bg-green-600 text-white shadow-lg hover:bg-green-500 hover:shadow-green-900/20 transition-all duration-200 transform hover:-translate-y-0.5"
           >
             {isAuthenticated ? 'Post a New Project' : 'Log In to Post a Project'}
           </button>
-        </div>
+        </motion.div>
 
         {/* Loading State Check */}
         {isLoading ? (
@@ -155,16 +194,36 @@ const ResearchProjects = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => {
+            {projects.map((project, index) => {
               const mailtoLink = `mailto:${project.email}?subject=Application: ${project.title}&body=Hi ${project.manager},%0D%0A%0D%0AI am interested in joining your research team for the ${project.title} project. Please find my resume attached to this email.%0D%0A%0D%0A--- My Details ---%0D%0AName: %0D%0AMajor & Year: %0D%0A%0D%0AWhy I'm a good fit:%0D%0A[Write a brief sentence here about your experience or interest]%0D%0A`;
+              const isHovered = hoveredProjectId === project._id;
 
               return (
-                <div key={project._id} className="bg-gray-900/40 backdrop-blur-md border border-gray-800 rounded-xl p-6 flex flex-col hover:border-green-600/50 transition-all duration-300 group shadow-xl">
-                  <div className="flex justify-between items-start mb-3">
-                     <h2 className="text-2xl font-bold text-white group-hover:text-green-400 transition-colors duration-200">
+                <motion.div
+                  key={project._id}
+                  className="bg-gray-900/40 backdrop-blur-md rounded-xl p-6 flex flex-col group shadow-xl card-hover"
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{
+                    opacity: 1,
+                    x: 0,
+                    scale: isHovered ? 1.05 : 1,
+                    y: isHovered ? -6 : 0,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    ease: HOUSE_EASE,
+                    delay: (index % 6) * 0.07,
+                    scale: { delay: 0, duration: 0.5, ease: HOUSE_EASE },
+                    y: { delay: 0, duration: 0.5, ease: HOUSE_EASE },
+                  }}
+                  onHoverStart={() => setHoveredProjectId(project._id)}
+                  onHoverEnd={() => setHoveredProjectId(null)}
+                >
+                  <div className="flex justify-between items-start gap-2 mb-3">
+                     <h2 className="min-w-0 break-words text-2xl font-bold text-white group-hover:text-green-400 transition-colors duration-200">
                        {project.title}
                      </h2>
-                     <span className="text-xs font-semibold text-gray-400 bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap ml-2">
+                     <span className="shrink-0 text-xs font-semibold text-gray-400 bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap">
                        Due: {project.deadline}
                      </span>
                   </div>
@@ -184,7 +243,7 @@ const ResearchProjects = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 mb-6 bg-gray-950/50 p-3 rounded-lg border border-gray-800/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 bg-gray-950/50 p-3 rounded-lg border border-gray-800/50">
                     <div>
                       <span className="block text-xs font-semibold text-gray-500 uppercase mb-1">Roles Needed</span>
                       <span className="text-sm text-green-400 font-medium">{project.rolesNeeded}</span>
@@ -204,12 +263,17 @@ const ResearchProjects = () => {
                       Led by: <span className="font-semibold text-white">{project.manager}</span>
                     </p>
                     <div className="flex items-center justify-between gap-2">
-                      <a href={mailtoLink} className="flex-grow px-4 py-2 bg-green-600/10 hover:bg-green-600 border border-green-600/30 hover:border-green-500 text-green-400 hover:text-white rounded-lg text-sm font-semibold transition-all duration-200 text-center">
+                      <motion.a
+                        href={mailtoLink}
+                        className="flex-grow px-4 py-2 bg-green-600/10 hover:bg-green-600 border border-green-600/30 hover:border-green-500 text-green-400 hover:text-white rounded-lg text-sm font-semibold transition-colors duration-200 text-center"
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        transition={{ duration: 0.3, ease: HOUSE_EASE }}
+                      >
                         Apply via Email
-                      </a>
+                      </motion.a>
                       {isAdmin && (
                         <button
-                          onClick={() => handleDelete(project._id)}
+                          onClick={() => setPendingDeleteId(project._id)}
                           title="Admin: delete this project"
                           className="px-3 py-2 bg-gray-800/60 hover:bg-red-600 border border-gray-700/50 hover:border-red-500 text-gray-500 hover:text-white rounded-lg text-sm transition-all duration-200"
                         >
@@ -218,22 +282,36 @@ const ResearchProjects = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         )}
       </div>
 
-      {/* Modal Form Code (Unchanged) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden my-8">
-            <div className="p-6 border-b border-gray-800 flex justify-between items-center sticky top-0 bg-gray-900 z-10">
+      {/* Post a Project modal: fixed header + footer, scrollable body */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+          <motion.div
+            className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.97 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="p-4 sm:p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
               <h2 className="text-2xl font-bold text-white">Post a Project</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+              <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">Project Title</label>
                 <input required type="text" name="title" value={formData.title} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors" placeholder="e.g. AI Course Chatbot" />
@@ -286,7 +364,8 @@ const ResearchProjects = () => {
                   <input required type="text" name="manager" value={formData.manager} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors" placeholder="Pete Purdue" />
                 </div>
               </div>
-              <div className="pt-4 flex justify-end gap-3 border-t border-gray-800 mt-6 sticky bottom-0 bg-gray-900 pb-2">
+              </div>
+              <div className="p-4 sm:p-6 pt-3 sm:pt-4 flex justify-end gap-3 border-t border-gray-800 shrink-0 bg-gray-900">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
                   Cancel
                 </button>
@@ -295,10 +374,21 @@ const ResearchProjects = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-    </div>
+          </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ResultModal result={result} onClose={() => setResult(null)} />
+      <ConfirmModal
+        open={pendingDeleteId !== null}
+        title="Delete Project?"
+        message="This will permanently remove the project from the board. This can't be undone."
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+    </motion.div>
   );
 };
 

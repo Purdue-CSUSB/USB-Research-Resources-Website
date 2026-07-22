@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
-import { fetchPurdueResearchOffice } from '../scrapers/purdueResearchOffice.js';
-import { fetchPurdueEventsCalendar } from '../scrapers/purdueEventsCalendar.js';
+import { fetchPurdueResearchOffice } from './purdueResearchOffice.js';
+import { fetchPurdueEventsCalendar } from './purdueEventsCalendar.js';
 
 // Each source is independent: if one site changes its markup/API and breaks, it just logs
 // a warning and contributes zero events instead of taking down the whole sync.
@@ -106,17 +106,4 @@ export async function runScrape() {
     message: `Scrape complete! Found ${scrapedEvents.length} total events. Added ${addedCount} NEW events to Google Calendar.`,
     newEventsAdded: addedCount
   };
-}
-
-export async function handleScrapeRequest(req, res) {
-  try {
-    const result = await runScrape();
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error('Scraper Error:', error);
-    if (error.notConfigured) {
-      return res.status(500).json({ message: error.message });
-    }
-    return res.status(500).json({ message: 'Scraper failed to run.', error: error.message });
-  }
 }

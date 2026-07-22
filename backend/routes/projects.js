@@ -7,9 +7,11 @@ export default async function projectsHandler(req, res) {
 
     const projects = await db.collection('projects')
       .find({})
-      // SECURE PROJECTION: 0 means hide this field from the frontend
+      // SECURE PROJECTION: 0 means hide this field from the public response.
+      // email + userId are internal-only and must never reach the unauthenticated board.
       .project({
-        email: 0
+        email: 0,
+        userId: 0
       })
       .sort({ createdAt: -1 })
       .toArray();

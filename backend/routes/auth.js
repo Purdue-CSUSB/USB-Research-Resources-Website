@@ -1,13 +1,18 @@
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'node:crypto';
 import { ObjectId } from 'mongodb';
 import { getDb } from '../lib/db.js';
 import { signToken, requireAuth } from '../lib/auth.js';
 import { sendMail } from '../lib/mailer.js';
 
 const CODE_TTL_MS = 15 * 60 * 1000;
+// Max wrong code entries before a verification/reset code is burned and must be re-requested.
+const MAX_CODE_ATTEMPTS = 5;
 
+// crypto.randomInt is cryptographically secure - unlike Math.random(), its output can't be
+// predicted from prior codes. Range is [100000, 1000000) => always a 6-digit code.
 function generateCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }
 
 function publicUser(user) {
@@ -90,6 +95,16 @@ export async function verifyEmail(req, res) {
       return res.status(400).json({ message: 'This account is already verified.' });
     }
     if (!user.verificationCode || user.verificationCode !== code) {
+      // Count wrong tries and burn the code after too many, so a 6-digit code can't be guessed.
+      const attempts = (user.verificationAttempts || 0) + 1;
+      if (attempts >= MAX_CODE_ATTEMPTS) {
+        await users.updateOne(
+          { _id: user._id },
+          { $unset: { verificationCode: '', verificationCodeExpires: '', verificationAttempts: '' } }
+        );
+        return res.status(400).json({ message: 'Too many incorrect attempts. Request a new code.' });
+      }
+      await users.updateOne({ _id: user._id }, { $set: { verificationAttempts: attempts } });
       return res.status(400).json({ message: 'Incorrect verification code.' });
     }
     if (!user.verificationCodeExpires || user.verificationCodeExpires < new Date()) {
@@ -98,7 +113,7 @@ export async function verifyEmail(req, res) {
 
     await users.updateOne(
       { _id: user._id },
-      { $set: { emailVerified: true }, $unset: { verificationCode: '', verificationCodeExpires: '' } }
+      { $set: { emailVerified: true }, $unset: { verificationCode: '', verificationCodeExpires: '', verificationAttempts: '' } }
     );
 
     const token = signToken({ ...user, emailVerified: true });
@@ -132,7 +147,7 @@ export async function resendCode(req, res) {
     const code = generateCode();
     await users.updateOne(
       { _id: user._id },
-      { $set: { verificationCode: code, verificationCodeExpires: new Date(Date.now() + CODE_TTL_MS) } }
+      { $set: { verificationCode: code, verificationCodeExpires: new Date(Date.now() + CODE_TTL_MS), verificationAttempts: 0 } }
     );
     await sendVerificationCode(user, code);
 
@@ -157,12 +172,12 @@ export async function login(req, res) {
     const user = await users.findOne({ email: normalizedEmail });
 
     if (!user) {
-      return res.status(401).json({ message: 'Incorrect email or password.' });
+      return res.status(401).json({ message: 'No account found for that email.' });
     }
 
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatches) {
-      return res.status(401).json({ message: 'Incorrect email or password.' });
+      return res.status(401).json({ message: 'Incorrect password.' });
     }
     if (!user.emailVerified) {
       return res.status(403).json({ message: 'Verify your email before logging in.' });
@@ -196,7 +211,7 @@ export async function requestPasswordReset(req, res) {
     const code = generateCode();
     await users.updateOne(
       { _id: user._id },
-      { $set: { resetCode: code, resetCodeExpires: new Date(Date.now() + CODE_TTL_MS) } }
+      { $set: { resetCode: code, resetCodeExpires: new Date(Date.now() + CODE_TTL_MS), resetAttempts: 0 } }
     );
 
     await sendMail({
@@ -232,6 +247,16 @@ export async function resetPassword(req, res) {
       return res.status(404).json({ message: 'No account found for that email.' });
     }
     if (!user.resetCode || user.resetCode !== code) {
+      // Count wrong tries and burn the code after too many, so a 6-digit code can't be guessed.
+      const attempts = (user.resetAttempts || 0) + 1;
+      if (attempts >= MAX_CODE_ATTEMPTS) {
+        await users.updateOne(
+          { _id: user._id },
+          { $unset: { resetCode: '', resetCodeExpires: '', resetAttempts: '' } }
+        );
+        return res.status(400).json({ message: 'Too many incorrect attempts. Request a new code.' });
+      }
+      await users.updateOne({ _id: user._id }, { $set: { resetAttempts: attempts } });
       return res.status(400).json({ message: 'Incorrect reset code.' });
     }
     if (!user.resetCodeExpires || user.resetCodeExpires < new Date()) {
@@ -241,7 +266,7 @@ export async function resetPassword(req, res) {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await users.updateOne(
       { _id: user._id },
-      { $set: { passwordHash }, $unset: { resetCode: '', resetCodeExpires: '' } }
+      { $set: { passwordHash }, $unset: { resetCode: '', resetCodeExpires: '', resetAttempts: '' } }
     );
 
     return res.status(200).json({ message: 'Password reset. You can now log in.' });

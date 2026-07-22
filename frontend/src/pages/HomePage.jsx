@@ -41,20 +41,18 @@ export default function HomePage() {
                     initial="hidden"
                     animate="visible"
                 >
-                    <motion.h1 
-                        className="text-5xl md:text-7xl font-black text-white mb-8 leading-tight flex items-center justify-center"
+                    <motion.h1
+                        className="text-4xl sm:text-5xl md:text-7xl font-black text-white mb-8 leading-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-2"
                         variants={itemVariants}
                     >
                         <img
                             src="./Purdue%20USB%20Research%20Resources.png"
                             alt="USB Research Resources Icon"
-                            className="w-16 h-16 md:w-20 md:h-20 object-contain mr-4"
+                            className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain"
                             draggable={false}
                         />
-                        <span className="text-white">
-                            Research
-                        </span>
-                        <span className="bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">&nbsp;Resources</span>
+                        <span className="text-white">Research</span>
+                        <span className="bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">Resources</span>
                     </motion.h1>
                     <motion.p 
                         className="text-xl md:text-2xl text-green-100 mb-12 max-w-4xl mx-auto leading-relaxed"
