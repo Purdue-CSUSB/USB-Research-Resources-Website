@@ -3,9 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import submitHandler from './routes/submit.js';
-import projectsHandler, { deleteProjectHandler } from './routes/projects.js';
+import projectsHandler, { deleteProjectHandler, myProjectsHandler } from './routes/projects.js';
 import { signup, verifyEmail, resendCode, login, me, requestPasswordReset, resetPassword } from './routes/auth.js';
-import { requireAuth, requireAdmin } from './lib/auth.js';
+import { requireAuth } from './lib/auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -78,7 +78,8 @@ app.post('/api/auth/login', loginLimiter, login);
 app.get('/api/auth/me', ...me);
 
 app.get('/api/projects', projectsHandler);
-app.delete('/api/projects/:id', requireAdmin, deleteProjectHandler);
+app.get('/api/projects/mine', requireAuth, myProjectsHandler);
+app.delete('/api/projects/:id', requireAuth, deleteProjectHandler);
 app.post('/api/submit', requireAuth, submitLimiter, submitHandler);
 
 // The daily Google Calendar sync now runs as the "Sync Calendar Events" GitHub Action

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker, User, LogOut, LogIn } from 'lucide-react'
+import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker, User, LogOut, LogIn, ChevronDown, Settings } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -11,13 +11,28 @@ export default function NavBar() {
     const currentPath = location.pathname
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [hoveredIndex, setHoveredIndex] = useState(null)
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+    const userMenuRef = useRef(null)
+
+    // Close the desktop user dropdown on an outside click.
+    useEffect(() => {
+        if (!isUserMenuOpen) return
+        const handleClickOutside = (e) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+                setIsUserMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [isUserMenuOpen])
 
     const handleLogout = () => {
         logout()
         navigate('/')
         closeMenu()
+        setIsUserMenuOpen(false)
     }
-    
+
     const isActive = (path) => {
         if (path === '/') {
             return currentPath === '/' || currentPath === ''
@@ -67,7 +82,7 @@ export default function NavBar() {
                         </Link>
                     </motion.div>
 
-                    <div className="hidden xl:flex space-x-3">
+                    <div className="hidden lg:flex space-x-2">
                         {navLinks.map((item, index) => {
                             const Icon = item.icon
                             return (
@@ -82,16 +97,16 @@ export default function NavBar() {
                                     onMouseLeave={() => setHoveredIndex(null)}
                                 >
                                     <motion.div
-                                        whileHover={!isActive(item.path) ? { scale: 1.05 } : {}}
-                                        animate={isActive(item.path) ? { scale: 1.08, y: -2 } : { scale: 1, y: 0 }}
+                                        whileHover={!isActive(item.path) ? { scale: 1.03 } : {}}
+                                        animate={isActive(item.path) ? { scale: 1.05, y: -2 } : { scale: 1, y: 0 }}
                                         transition={{ duration: 0.2 }}
                                         className="relative"
                                     >
-                                        <Link 
-                                            to={item.path} 
-                                            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${isActive(item.path) ? 'bg-green-600 text-white shadow-2xl' : 'bg-transparent text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`}
+                                        <Link
+                                            to={item.path}
+                                            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${isActive(item.path) ? 'bg-green-600 text-white shadow-2xl' : 'bg-transparent text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`}
                                         >
-                                            <Icon className="w-4 h-4" />
+                                            <Icon className="w-4 h-4 shrink-0" />
                                             <span>{item.label}</span>
                                         </Link>
                                     </motion.div>
@@ -100,18 +115,42 @@ export default function NavBar() {
                         })}
 
                         {isAuthenticated ? (
-                            <div className="flex items-center space-x-2 pl-2 ml-2 border-l border-gray-700">
-                                <span className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-300">
+                            <div className="relative pl-2 ml-2 border-l border-gray-700" ref={userMenuRef}>
+                                <button
+                                    onClick={() => setIsUserMenuOpen((open) => !open)}
+                                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-green-600/30 hover:text-green-300 transition-all duration-200"
+                                >
                                     <User className="w-4 h-4" />
                                     <span>{user?.username}</span>
-                                </span>
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-all duration-200"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    <span>Log Out</span>
+                                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
+                                <AnimatePresence>
+                                    {isUserMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -8 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute right-0 mt-2 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                                        >
+                                            <Link
+                                                to="/account"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                                className="flex items-center space-x-2 px-4 py-3 text-sm font-medium text-gray-300 hover:bg-green-600/30 hover:text-green-300 transition-all duration-200"
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                                <span>Account</span>
+                                            </Link>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex items-center space-x-2 px-4 py-3 rounded-none text-sm font-medium text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-all duration-200 w-full"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                <span>Log Out</span>
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         ) : (
                             <Link
@@ -126,7 +165,7 @@ export default function NavBar() {
 
                     <motion.button
                         onClick={toggleMenu}
-                        className="xl:hidden flex items-center p-2 rounded-lg text-gray-300 hover:bg-green-600/20 hover:text-green-400"
+                        className="lg:hidden flex items-center p-2 rounded-lg text-gray-300 hover:bg-green-600/20 hover:text-green-400"
                         whileTap={{ scale: 0.9 }}
                     >
                         <AnimatePresence mode="wait">
@@ -158,7 +197,7 @@ export default function NavBar() {
                 <AnimatePresence>
                     {isMenuOpen && (
                         <motion.div
-                            className="xl:hidden mt-4 pb-4 border-t border-gray-700"
+                            className="lg:hidden mt-4 pb-4 border-t border-gray-700"
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -199,6 +238,14 @@ export default function NavBar() {
                                                 <User className="w-4 h-4" />
                                                 <span>{user?.username}</span>
                                             </div>
+                                            <Link
+                                                to="/account"
+                                                onClick={closeMenu}
+                                                className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-green-600/30 hover:text-green-300 transition-all duration-200"
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                                <span>Account</span>
+                                            </Link>
                                             <button
                                                 onClick={handleLogout}
                                                 className="flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-all duration-200 w-full"

@@ -113,6 +113,18 @@ export default async function submitHandler(req, res) {
       const db = await getDb();
       const collection = db.collection('projects');
 
+      // Cap active projects per account at 3 so the board doesn't get crowded by one user;
+      // admins are exempt (trusted accounts, and they may need to post on behalf of others).
+      if (!req.user.isAdmin) {
+        const existingCount = await collection.countDocuments({ userId: new ObjectId(req.user.userId) });
+        if (existingCount >= 3) {
+          return res.status(400).json({
+            message: 'You can only have 3 active projects at a time. Delete one from your account to post another.',
+            stage: 'limit'
+          });
+        }
+      }
+
       const newProject = {
         title: title,
         description: description,

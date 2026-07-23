@@ -29,7 +29,7 @@ export default function HomePage() {
 
     return (
         <motion.div 
-            className="h-screen -mt-7 pt-20 flex flex-col"
+            className="min-h-screen pt-20 flex flex-col"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -93,7 +93,7 @@ export default function HomePage() {
             </div>
 
             <motion.div 
-                className="bg-black/50 backdrop-blur-sm pb-16 flex-1 flex flex-col justify-start"
+                className="bg-black/50 backdrop-blur-sm pb-16 flex-1 flex flex-col justify-center"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}

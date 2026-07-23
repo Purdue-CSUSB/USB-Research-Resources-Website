@@ -1,23 +1,20 @@
 import React, { useState } from "react";
-import { ExternalLinkIcon, CalendarIcon, BookOpenIcon } from "lucide-react";
+import { ExternalLinkIcon, BookOpenIcon } from "lucide-react";
 import { motion } from 'framer-motion';
 
 const conferences = [
     {
         name: "Fall Undergraduate Research Expo",
-        date: "Nov. 19-26, 2024",
         description: "An excellent opportunity for undergraduate researchers to showcase their scholarly work and creative endeavors through poster presentations or research talks.",
         link: "https://www.purdue.edu/undergrad-research/conferences/index.php"
     },
     {
         name: "Spring Undergraduate Research Conference",
-        date: "April 8-15, 2025",
         description: "The largest showcase of undergraduate research at Purdue, featuring oral or poster presentations.",
         link: "https://www.purdue.edu/undergrad-research/conferences/index.php"
     },
     {
         name: "Summer Undergraduate Research Symposium",
-        date: "July 25, 2025",
         description: "An opportunity for undergraduate researchers to present their work through research talks or poster presentations.",
         link: "https://www.purdue.edu/undergrad-research/conferences/index.php"
     }
@@ -27,14 +24,12 @@ const resources = [
     {
         title: "Journal of Purdue Undergraduate Research (JPUR)",
         description: "Publish research snapshots or articles in JPUR to gain experience in scientific writing and share your work with a broader audience.",
-        link: "https://docs.lib.purdue.edu/jpur/",
-        deadlines: ["Fall: Nov. 15", "Spring: Feb. 15"]
+        link: "https://docs.lib.purdue.edu/jpur/"
     },
     {
         title: "Undergraduate Research Seminar Series",
         description: "Great resources to share your work, attend others' presentations, and connect with faculty projects.",
-        link: "https://www.purdue.edu/undergrad-research/seminar-series/index.php",
-        upcoming: "Apr 24, 4pm - Marketing your undergraduate research experiences"
+        link: "https://www.purdue.edu/undergrad-research/seminar-series/index.php"
     }
 ];
 
@@ -123,10 +118,6 @@ export default function PresentingYourResearchPage() {
                                             {conference.name}
                                             <ExternalLinkIcon className="w-5 h-5 ml-2"/>
                                         </motion.a>
-                                    </div>
-                                    <div className="flex items-center text-green-400 mb-3">
-                                        <CalendarIcon className="w-4 h-4 mr-2"/>
-                                        <span className="font-semibold">{conference.date}</span>
                                     </div>
                                     <p className="text-gray-300 leading-relaxed">{conference.description}</p>
                                 </motion.div>
@@ -245,27 +236,6 @@ export default function PresentingYourResearchPage() {
                                         </motion.a>
                                     </div>
                                     <p className="text-gray-300 leading-relaxed mb-4">{resource.description}</p>
-
-                                    {resource.deadlines && (
-                                        <div className="mb-4">
-                                            <h4 className="text-green-400 font-semibold mb-2">Submission Deadlines:</h4>
-                                            <ul className="text-gray-300 space-y-1">
-                                                {resource.deadlines.map((deadline, index) => (
-                                                    <li key={index} className="flex items-center">
-                                                        <span className="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
-                                                        {deadline}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-
-                                    {resource.upcoming && (
-                                        <div className="mb-4">
-                                            <h4 className="text-green-400 font-semibold mb-2">Upcoming Event:</h4>
-                                            <p className="text-gray-300">{resource.upcoming}</p>
-                                        </div>
-                                    )}
                                 </motion.div>
                             );
                         })}

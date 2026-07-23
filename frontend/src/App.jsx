@@ -12,6 +12,7 @@ import NotFoundPage from "./pages/NotFoundPage.jsx"
 import LoginPage from "./pages/LoginPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx"
+import AccountPage from "./pages/AccountPage.jsx"
 import { AuthProvider } from "./context/AuthContext.jsx"
 
 
@@ -61,6 +62,7 @@ function AppRoutes() {
                     <Route path="/login" element={<PageWrapper><LoginPage /></PageWrapper>} />
                     <Route path="/signup" element={<PageWrapper><SignupPage /></PageWrapper>} />
                     <Route path="/forgot-password" element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+                    <Route path="/account" element={<PageWrapper><AccountPage /></PageWrapper>} />
 
                     <Route path="*" element={<PageWrapper><NotFoundPage /></PageWrapper>} />
                 </Routes>
