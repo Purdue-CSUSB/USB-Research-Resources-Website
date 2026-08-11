@@ -111,7 +111,7 @@ export default function HomePage() {
                         <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-6">
                             Still have questions about undergraduate research or want to reach out? Check out our Instagram and website for more about Purdue USB.
                         </p>
-                        <div className="flex justify-center items-center space-x-12">
+                        <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-4">
                             <motion.a
                                 href="https://purdueusb.com/"
                                 target="_blank"

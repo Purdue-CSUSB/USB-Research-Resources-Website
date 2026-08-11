@@ -1,33 +1,31 @@
 import nodemailer from 'nodemailer';
+import { requireEnv, requireEnvInt } from './env.js';
 
-let transporter;
-
+// Cached on globalThis for the same reason as the Mongo client: warm invocations reuse the
+// pooled SMTP transport instead of building a new one per request.
 function getTransporter() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-    return null;
-  }
-
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: Number(SMTP_PORT) === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
+  if (!globalThis.__usbMailTransport) {
+    const port = requireEnvInt('SMTP_PORT');
+    globalThis.__usbMailTransport = nodemailer.createTransport({
+      host: requireEnv('SMTP_HOST'),
+      port,
+      // 465 is implicit TLS; 587 negotiates STARTTLS, which nodemailer does on its own.
+      secure: port === 465,
+      auth: { user: requireEnv('SMTP_USER'), pass: requireEnv('SMTP_PASS') },
     });
   }
 
-  return transporter;
+  return globalThis.__usbMailTransport;
 }
 
+/**
+ * Sends transactional mail.
+ *
+ * Missing SMTP config throws, rather than the old behaviour of warning and returning
+ * { skipped: true }. That silent skip meant a misconfigured deploy produced accounts nobody
+ * could ever verify and password resets that never arrived, while the API still answered 200.
+ */
 export async function sendMail({ to, subject, text }) {
   const transport = getTransporter();
-  if (!transport) {
-    console.warn(`[mailer] SMTP is not configured - skipping email to ${to} ("${subject}").`);
-    return { skipped: true };
-  }
-
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
-  await transport.sendMail({ from, to, subject, text });
-  return { skipped: false };
+  await transport.sendMail({ from: requireEnv('SMTP_FROM'), to, subject, text });
 }

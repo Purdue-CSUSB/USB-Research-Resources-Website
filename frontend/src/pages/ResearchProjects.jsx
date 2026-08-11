@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { PROJECT_LIMIT } from '../config.js';
 import ResultModal from '../components/ResultModal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 
@@ -26,11 +27,10 @@ const FieldError = ({ message }) =>
 const HOUSE_EASE = [0.04, 0.62, 0.23, 0.98];
 
 // Matches the backend cap enforced in submit.js - kept in sync there.
-const PROJECT_LIMIT = 3;
 
 const ResearchProjects = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, token } = useAuth();
+  const { isAuthenticated, isAdmin, authFetch } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Drives the styled success/error popup shown after a submission: { type, title, message } | null.
@@ -65,9 +65,7 @@ const ResearchProjects = () => {
 
     const fetchMyProjectCount = async () => {
       try {
-        const response = await fetch('/api/projects/mine', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await authFetch('/api/projects/mine');
         const data = await response.json();
         if (response.ok) {
           setMyProjectCount(data.length);
@@ -78,7 +76,7 @@ const ResearchProjects = () => {
     };
 
     fetchMyProjectCount();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, authFetch]);
 
   // Fetch projects from MongoDB on load
   useEffect(() => {
@@ -127,12 +125,9 @@ const ResearchProjects = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/submit', {
+      const response = await authFetch('/api/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
@@ -158,11 +153,13 @@ const ResearchProjects = () => {
         return;
       }
 
-      // Instantly add the new project to the UI without refreshing the page
+      // Instantly add the new project to the UI without refreshing the page. Use the saved
+      // document the API echoes back: this used to fake `_id: Date.now().toString()`, and
+      // deleting that card before a reload sent a non-ObjectId and 400'd.
       const newProjectForBoard = {
-        _id: Date.now().toString(), // Temp ID until refresh
         ...formData,
         techStack: formData.techStack.split(',').map(tech => tech.trim()),
+        ...data.project,
         linkedin: "#"
       };
 
@@ -177,7 +174,11 @@ const ResearchProjects = () => {
       setResult({
         type: 'success',
         title: 'Project Posted!',
-        message: 'Your project passed moderation and is now live on the board.'
+        // The API reports notification failures as a warning on an otherwise successful save,
+        // so the project is live either way - say so rather than implying it failed.
+        message: data.warning
+          ? `Your project is now live on the board. ${data.warning}`
+          : 'Your project passed moderation and is now live on the board.'
       });
 
     } catch (error) {
@@ -197,9 +198,8 @@ const ResearchProjects = () => {
     setPendingDeleteId(null);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await authFetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {

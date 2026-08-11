@@ -1,22 +1,37 @@
 import { MongoClient } from 'mongodb';
+import { requireEnv } from './env.js';
 
-let mongoClient;
+// Serverless connection reuse. A warm invocation keeps module scope, but `vercel dev` (and
+// Vercel's own module reloading) can re-evaluate this file, so the promise is parked on
+// globalThis to survive that and avoid rebuilding a pool per request.
+//
+// maxPoolSize is deliberately small: the driver defaults to 100, and enough concurrent lambda
+// instances each opening a 100-connection pool will blow past Atlas M0's 500-connection cap
+// and start failing requests.
+const MONGO_OPTIONS = {
+  maxPoolSize: 10,
+  minPoolSize: 0,
+  serverSelectionTimeoutMS: 10000,
+};
 
-export function getMongoClient() {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error('MONGODB_URI is not set.');
+function connect() {
+  return new MongoClient(requireEnv('MONGODB_URI'), MONGO_OPTIONS).connect();
+}
+
+export async function getMongoClient() {
+  if (!globalThis.__usbMongoClientPromise) {
+    // Clear a rejected promise so the next request retries, instead of the instance being
+    // stuck with a permanently failed connection for the rest of its life.
+    globalThis.__usbMongoClientPromise = connect().catch((error) => {
+      globalThis.__usbMongoClientPromise = undefined;
+      throw error;
+    });
   }
 
-  if (!mongoClient) {
-    mongoClient = new MongoClient(uri);
-  }
-
-  return mongoClient;
+  return globalThis.__usbMongoClientPromise;
 }
 
 export async function getDb() {
-  const client = getMongoClient();
-  await client.connect();
-  return client.db('usb_board');
+  const client = await getMongoClient();
+  return client.db(requireEnv('MONGODB_DB'));
 }

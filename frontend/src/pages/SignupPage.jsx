@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { ALLOWED_EMAIL_DOMAIN } from '../config.js';
 
 export default function SignupPage() {
   const { signup, verifyEmail, resendCode } = useAuth();
@@ -19,8 +20,9 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.toLowerCase().endsWith('@purdue.edu')) {
-      setError('You must sign up with a valid @purdue.edu email.');
+    // Convenience check only - the server enforces the same domain from the same env var.
+    if (!email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN)) {
+      setError(`You must sign up with a valid ${ALLOWED_EMAIL_DOMAIN} email.`);
       return;
     }
 

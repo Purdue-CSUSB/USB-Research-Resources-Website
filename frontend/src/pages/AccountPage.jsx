@@ -4,14 +4,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Beaker } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { PROJECT_LIMIT } from '../config.js';
 import ResultModal from '../components/ResultModal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 
-const PROJECT_LIMIT = 3;
 
 const AccountPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user, token } = useAuth();
+  const { isAuthenticated, user, authFetch } = useAuth();
 
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,9 +27,7 @@ const AccountPage = () => {
 
     const fetchMyProjects = async () => {
       try {
-        const response = await fetch('/api/projects/mine', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await authFetch('/api/projects/mine');
         const data = await response.json();
         if (response.ok) {
           setProjects(data);
@@ -42,16 +40,15 @@ const AccountPage = () => {
     };
 
     fetchMyProjects();
-  }, [isAuthenticated, navigate, token]);
+  }, [isAuthenticated, navigate, authFetch]);
 
   const confirmDelete = async () => {
     const projectId = pendingDeleteId;
     setPendingDeleteId(null);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await authFetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {

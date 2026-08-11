@@ -1,10 +1,13 @@
 
 import React, { useState } from "react";
 import { motion } from 'framer-motion';
+import { GOOGLE_CALENDAR_ID, CALENDAR_TIMEZONE } from '../config.js';
 
 export default function CalendarPage() {
-    const calendarId = '88217dfcf4bcf746ad4132d93a9e0047a0c75e246d22dcb07fd75a8798ba0e65@group.calendar.google.com'
-    const timeZone = 'America%2FIndiana%2FIndianapolis'
+    // Both are public constants in src/config.js, matching backend/lib/constants.js, so the
+    // embed points at the same calendar the scraper writes events to.
+    const calendarId = encodeURIComponent(GOOGLE_CALENDAR_ID)
+    const timeZone = encodeURIComponent(CALENDAR_TIMEZONE)
     const [isHovered, setIsHovered] = useState(false);
     
     return (

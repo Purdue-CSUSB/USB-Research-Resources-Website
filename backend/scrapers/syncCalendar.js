@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import { fetchPurdueResearchOffice } from './purdueResearchOffice.js';
 import { fetchPurdueEventsCalendar } from './purdueEventsCalendar.js';
+import { requireEnv } from '../lib/env.js';
+import { CALENDAR_TIMEZONE, GOOGLE_CALENDAR_ID } from '../lib/constants.js';
 
 // Each source is independent: if one site changes its markup/API and breaks, it just logs
 // a warning and contributes zero events instead of taking down the whole sync.
@@ -40,20 +42,13 @@ export async function runScrape() {
   console.log(`Found ${scrapedEvents.length} upcoming events across all sources. Connecting to Google Calendar...`);
 
   // SECURE CLOUD AUTHENTICATION
-  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-  const rawPrivateKey = process.env.GOOGLE_PRIVATE_KEY;
-  const calendarIdToUse = process.env.GOOGLE_CALENDAR_ID;
+  const calendarIdToUse = GOOGLE_CALENDAR_ID;
 
-  if (!clientEmail || !rawPrivateKey || !calendarIdToUse) {
-    const error = new Error('Google Calendar sync is not configured: set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_CALENDAR_ID.');
-    error.notConfigured = true;
-    throw error;
-  }
-
-  const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
+  // The PEM is stored with literal "\n" so it survives being a single-line env value.
+  const privateKey = requireEnv('GOOGLE_PRIVATE_KEY').replace(/\\n/g, '\n');
 
   const auth = new google.auth.JWT({
-    email: clientEmail,
+    email: requireEnv('GOOGLE_CLIENT_EMAIL'),
     key: privateKey,
     scopes: ['https://www.googleapis.com/auth/calendar.events']
   });
@@ -85,11 +80,11 @@ export async function runScrape() {
       description: event.description,
       start: {
         date: event.date.toISOString().split('T')[0],
-        timeZone: 'America/Indiana/Indianapolis',
+        timeZone: CALENDAR_TIMEZONE,
       },
       end: {
         date: (event.endDate || new Date(event.date.getTime() + 86400000)).toISOString().split('T')[0],
-        timeZone: 'America/Indiana/Indianapolis',
+        timeZone: CALENDAR_TIMEZONE,
       },
     };
 

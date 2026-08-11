@@ -3,19 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "node --watch --env-file=.env server.js",
-    "start": "node --env-file=.env server.js",
-    "scrape": "node --env-file-if-exists=.env scripts/scrape.js"
-  },
   "dependencies": {
     "axios": "^1.16.1",
     "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.4.1",
     "googleapis": "^173.0.0",
-    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^7.2.0",
     "nodemailer": "^9.0.3",

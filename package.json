@@ -1,0 +1,20 @@
+{
+  "name": "usb-research-resources",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "api": "vercel dev",
+    "build": "npm run build --workspace frontend",
+    "scrape": "node --env-file-if-exists=.env backend/scripts/scrape.js",
+    "keepalive": "node --env-file-if-exists=.env backend/scripts/keepDatabaseAwake.js",
+    "ensure-indexes": "node --env-file-if-exists=.env backend/scripts/ensureIndexes.js"
+  },
+  "devDependencies": {
+    "vercel": "^58.4.4"
+  }
+}

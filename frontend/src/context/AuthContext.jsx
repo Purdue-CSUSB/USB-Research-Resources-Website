@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'usb_auth';
+const SESSION_EXPIRED_MESSAGE = 'Your session has expired. Please log in again.';
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -34,6 +35,38 @@ export function AuthProvider({ children }) {
       localStorage.removeItem(STORAGE_KEY);
     }
   }, [auth]);
+
+  // Read through a ref so authFetch keeps a stable identity and can safely sit in effect
+  // dependency arrays without re-firing every render.
+  const authRef = useRef(auth);
+  useEffect(() => {
+    authRef.current = auth;
+  }, [auth]);
+
+  /**
+   * fetch() for endpoints that require a login: attaches the bearer token, and treats a 401 as
+   * "this session is over" by clearing it.
+   *
+   * Without this, an expired token left isAuthenticated stuck at true - the UI kept rendering
+   * as signed in while every protected request quietly failed in a console.error. Access tokens
+   * are 2h now (down from 24h), so this is a routine path, not a corner case.
+   */
+  const authFetch = useCallback(async (url, options = {}) => {
+    const token = authRef.current?.token;
+    const headers = { ...(options.headers || {}) };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401) {
+      setAuth(null);
+      throw new Error(SESSION_EXPIRED_MESSAGE);
+    }
+
+    return response;
+  }, []);
 
   const signup = async (username, email, password) => {
     const response = await fetch('/api/auth/signup', {
@@ -100,6 +133,7 @@ export function AuthProvider({ children }) {
     token: auth?.token || null,
     isAuthenticated: !!auth?.token,
     isAdmin: !!auth?.user?.isAdmin,
+    authFetch,
     signup,
     verifyEmail,
     resendCode,
