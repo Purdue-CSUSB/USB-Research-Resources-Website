@@ -7,6 +7,9 @@
   "functions": {
     "api/submit.js": {
       "includeFiles": "backend/prompts/**"
+    },
+    "api/projects/[id].js": {
+      "includeFiles": "backend/prompts/**"
     }
   },
   "rewrites": [
