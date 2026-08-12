@@ -1,8 +1,19 @@
-import React, { useState } from "react";
-import { ExternalLinkIcon, CodeIcon, UsersIcon, BookOpenIcon, CalendarIcon } from "lucide-react";
-import { motion } from 'framer-motion';
+import { Link } from "react-router-dom";
+import { ExternalLinkIcon, CodeIcon, UsersIcon, BookOpenIcon, CalendarIcon, LaptopIcon } from "lucide-react";
+import Card from '../components/ui/Card.jsx';
+import PageHeader, { PageShell } from '../components/ui/PageHeader.jsx';
+import UnderlineSwipe from '../components/ui/UnderlineSwipe.jsx';
 
 const researchResources = [
+    {
+        title: "USB Student Projects Board",
+        link: "/projects",
+        // The only entry that points inside this app, so it routes rather than opening a tab.
+        internal: true,
+        description: "A live, centralized database of approved student research projects, tech initiatives, and collaborative opportunities within the department.",
+        help: "If you want to apply to join research on campus.",
+        icon: <LaptopIcon className="w-5 h-5" />
+    },
     {
         title: "Undergraduate Research Opportunities with CS Professor",
         link: "https://www.cs.purdue.edu/corporate/employment/cs%20research.html",
@@ -33,89 +44,61 @@ const researchResources = [
     }
 ];
 
+function ResourceTitle({ resource }) {
+    const label = (
+        <>
+            <span className="relative font-heading font-bold text-xl">
+                {resource.title}
+                <UnderlineSwipe color="gold" />
+            </span>
+            {!resource.internal && <ExternalLinkIcon className="w-5 h-5 shrink-0 text-usb-muted" />}
+        </>
+    )
+
+    // items-center so the external-link glyph rides with the last line of the title rather
+    // than being nudged down by a hand-tuned margin.
+    const className = "group inline-flex items-center gap-2 text-usb-charcoal no-underline"
+
+    return resource.internal ? (
+        <Link to={resource.link} className={className}>{label}</Link>
+    ) : (
+        <a href={resource.link} target="_blank" rel="noopener noreferrer" className={className}>{label}</a>
+    )
+}
+
 export default function CSSpecificResearchPage() {
     return (
-        <motion.div 
-            className="min-h-screen pt-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-        >
-            <div className="max-w-4xl mx-auto px-6 py-12">
-                <motion.div 
-                    className="text-center mb-12"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
-                >
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                        CS-Specific <span className="text-green-400">Research</span>
-                    </h1>
-                    <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                        Interested in doing undergraduate research related to your CS/DS/AI Degree but don't know where to start? 
-                        Check out this list of helpful resources to learn more!
-                    </p>
-                </motion.div>
+        <PageShell width="max-w-4xl">
+            <PageHeader
+                title="CS-Specific"
+                accent="Research"
+                lead="Interested in doing undergraduate research related to your CS/DS/AI Degree but don't know where to start? Check out this list of helpful resources to learn more!"
+            />
 
-                <div className="space-y-8 mb-12">
-                    {researchResources.map((resource, index) => {
-                        const [isHovered, setIsHovered] = useState(false);
-                        return (
-                            <motion.div 
-                                key={index} 
-                                className="bg-black/40 rounded-lg p-6 card-hover"
-                                initial={{ opacity: 0, x: -30 }}
-                                animate={{ 
-                                    opacity: 1, 
-                                    x: 0,
-                                    scale: isHovered ? 1.05 : 1,
-                                    y: isHovered ? -6 : 0,
-                                }}
-                                transition={{ 
-                                    duration: 0.5,
-                                    ease: [0.04, 0.62, 0.23, 0.98],
-                                    delay: index * 0.07,
-                                    scale: { delay: 0, duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] },
-                                    y: { delay: 0, duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] }
-                                }}
-                                onHoverStart={() => setIsHovered(true)}
-                                onHoverEnd={() => setIsHovered(false)}
-                            >
-                                <div className="flex items-center mb-4">
-                                    <motion.div 
-                                        className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-4 text-white"
-                                        whileHover={{ scale: 1.15, y: -3 }}
-                                        transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                    >
-                                        {resource.icon}
-                                    </motion.div>
-                                    <motion.a 
-                                        href={resource.link} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-xl font-bold text-green-400 hover:text-green-300 transition-colors flex items-center underline"
-                                        whileHover={{ x: 3, scale: 1.03, y: -2 }}
-                                        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                    >
-                                        {resource.title}
-                                        <ExternalLinkIcon className="w-5 h-5 ml-2" />
-                                    </motion.a>
-                                </div>
-                            
-                                <div className="mb-4">
-                                    <h4 className="text-green-400 font-semibold mb-2">Description:</h4>
-                                    <p className="text-gray-300 leading-relaxed">{resource.description}</p>
-                                </div>
-                                
-                                <div>
-                                    <h4 className="text-green-400 font-semibold mb-2">How it can help:</h4>
-                                    <p className="text-gray-300 leading-relaxed">{resource.help}</p>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+            <div className="space-y-6">
+                {researchResources.map((resource, index) => (
+                    <Card key={resource.title} index={index} padding="p-6 sm:p-8">
+                        {/* items-center so the title sits level with the icon tile instead of
+                            top-aligned against it, which read as misaligned. */}
+                        <div className="flex items-center gap-4 mb-5">
+                            <div className="w-11 h-11 shrink-0 bg-usb-gold rounded-lg flex items-center justify-center text-usb-charcoal">
+                                {resource.icon}
+                            </div>
+                            <ResourceTitle resource={resource} />
+                        </div>
+
+                        <div className="mb-4">
+                            <h4 className="font-heading font-bold text-xs uppercase tracking-wide text-usb-muted mb-1">Description</h4>
+                            <p className="font-body text-usb-charcoal leading-relaxed">{resource.description}</p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-heading font-bold text-xs uppercase tracking-wide text-usb-muted mb-1">How it can help</h4>
+                            <p className="font-body text-usb-charcoal leading-relaxed">{resource.help}</p>
+                        </div>
+                    </Card>
+                ))}
             </div>
-        </motion.div>
+        </PageShell>
     );
 }

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
 import { ExternalLinkIcon } from "lucide-react";
-import { motion } from 'framer-motion';
+import Card from '../components/ui/Card.jsx';
+import PageHeader, { PageShell } from '../components/ui/PageHeader.jsx';
+import UnderlineSwipe from '../components/ui/UnderlineSwipe.jsx';
 
 const organizations = [
     {
@@ -41,75 +42,47 @@ const organizations = [
         title: "Summer Stay Scholars",
         link: "https://www.purdue.edu/summerstay/",
         description: "Through the Summer Stay Scholars program, students can combine coursework with a research or internship experience."
+    },
+    {
+        title: "ML@Purdue Projects",
+        link: "https://mlpurdue.com/projects/",
+        description: "Student-led machine learning research projects that you can apply to join, each run by a mentor who leads the team through a semester or more of hands-on work."
     }
 ];
 
 export default function OrganizationsProgramsPage() {
     return (
-        <motion.div 
-            className="min-h-screen pt-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-        >
-            <div className="max-w-4xl mx-auto px-6 py-12">
-                <motion.div 
-                    className="text-center mb-12"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
-                >
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                        Research <span className="text-green-400">Organizations & Programs</span>
-                    </h1>
-                    <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                        Discover the various organizations and programs that support undergraduate research at Purdue University.
-                    </p>
-                </motion.div>
-                
-                <div className="space-y-8">
-                    {organizations.map((org, index) => {
-                        const [isHovered, setIsHovered] = useState(false);
-                        return (
-                            <motion.div 
-                                key={index} 
-                                className="bg-black/40 rounded-lg p-6 card-hover"
-                                initial={{ opacity: 0, x: -30 }}
-                                animate={{ 
-                                    opacity: 1, 
-                                    x: 0,
-                                    scale: isHovered ? 1.05 : 1,
-                                    y: isHovered ? -6 : 0,
-                                }}
-                                transition={{ 
-                                    duration: 0.5,
-                                    ease: [0.04, 0.62, 0.23, 0.98],
-                                    delay: index * 0.07,
-                                    scale: { delay: 0, duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] },
-                                    y: { delay: 0, duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] }
-                                }}
-                                onHoverStart={() => setIsHovered(true)}
-                                onHoverEnd={() => setIsHovered(false)}
+        <PageShell width="max-w-4xl">
+            <PageHeader
+                title="Research"
+                accent="Organizations & Programs"
+                lead="Discover the various organizations and programs that support undergraduate research at Purdue University."
+            />
+
+            <div className="space-y-6">
+                {organizations.map((org, index) => (
+                    <Card key={org.title} index={index} padding="p-6 sm:p-8">
+                        {/* A gold bar beside the title, sized to the title's own height, so the
+                            heading reads as more than a run of black text. */}
+                        <div className="flex items-stretch gap-3 mb-3">
+                            <span aria-hidden="true" className="w-1 shrink-0 rounded-full bg-usb-gold" />
+                            <a
+                                href={org.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group inline-flex items-start gap-2 text-usb-charcoal no-underline"
                             >
-                                <div className="mb-4">
-                                    <motion.a 
-                                        href={org.link} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-xl font-bold text-green-400 hover:text-green-300 transition-colors flex items-center underline"
-                                        whileHover={{ x: 4, scale: 1.03, y: -2 }}
-                                        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                    >
-                                        {org.title}
-                                        <ExternalLinkIcon className="w-5 h-5 ml-2" />
-                                    </motion.a>
-                                </div>
-                                <p className="text-gray-300 leading-relaxed">{org.description}</p>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+                                <span className="relative font-heading font-bold text-xl">
+                                    {org.title}
+                                    <UnderlineSwipe color="gold" />
+                                </span>
+                                <ExternalLinkIcon className="w-5 h-5 shrink-0 mt-1 text-usb-muted" />
+                            </a>
+                        </div>
+                        <p className="font-body text-usb-charcoal leading-relaxed">{org.description}</p>
+                    </Card>
+                ))}
             </div>
-        </motion.div>
+        </PageShell>
     );
 }

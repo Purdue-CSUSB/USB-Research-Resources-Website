@@ -1,0 +1,41 @@
+name: Sync Calendar Events
+
+# Daily scrape of Purdue research events -> Google Calendar.
+# Replaces the old in-process node-cron job that lived in the backend server.
+#
+# Runs on the same schedule as keep-database-awake.yml, but is deliberately a separate workflow:
+# the two have nothing to do with each other, so they get their own run history and their own
+# failure notifications. A broken scrape should never look like a database problem, or vice versa.
+#
+# NOTE: scheduled workflows only fire from the default branch, so this file must be on `main`
+# to run at all.
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily (~24h), same time the backend cron used
+  workflow_dispatch: {}    # allow manual runs from the Actions tab
+
+permissions:
+  contents: read           # least privilege: the job only needs to read the repo
+
+jobs:
+  scrape:
+    name: Sync calendar events
+    runs-on: ubuntu-latest # Linux runner = 1x billing rate (free on public repos)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      # Run from the repo root: this is an npm workspace, so the lockfile and the `scrape`
+      # script both live there even though the scraper itself is in backend/scrapers.
+      # --omit=dev skips the Vercel CLI and Vite, neither of which the scrape needs.
+      - run: npm ci --omit=dev
+      - name: Run calendar scrape
+        run: npm run scrape
+        env:
+          # The calendar id is public and now lives in backend/lib/constants.js, so only the
+          # service-account credentials need to be secrets.
+          GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
+          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}

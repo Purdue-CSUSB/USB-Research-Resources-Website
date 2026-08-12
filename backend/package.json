@@ -1,0 +1,15 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.16.1",
+    "bcryptjs": "^2.4.3",
+    "googleapis": "^173.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.2.0",
+    "nodemailer": "^9.0.3",
+    "openai": "^6.39.0"
+  }
+}
