@@ -48,7 +48,9 @@ export default function HomePage() {
                     className="max-w-6xl mx-auto text-center"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+                    // Same timing as everything below it, so the page arrives as one thing
+                    // rather than the hero landing first and the rest catching up.
+                    transition={{ duration: 0.35, ease: 'easeOut', delay: 0.05 }}
                 >
                     {/* The icon sits inline with the wordmark and scales with it, so the pair
                         reads as one lockup at every breakpoint instead of a logo parked above
@@ -112,10 +114,12 @@ export default function HomePage() {
                         Where to Start
                     </motion.h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {startingPoints.map((item, index) => {
+                        {startingPoints.map((item) => {
                             const Icon = item.icon;
+                            // fadeUp() with no index: the four are one row and should land
+                            // together, like the rest of the page.
                             return (
-                                <motion.div key={item.to} {...fadeUp(index, 0.1)}>
+                                <motion.div key={item.to} {...fadeUp()}>
                                     <Link
                                         to={item.to}
                                         className="group flex flex-col h-full bg-white border border-usb-border rounded-2xl shadow-md p-6 no-underline transition-shadow duration-200 hover:shadow-xl"
@@ -138,13 +142,15 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Connect band, on charcoal like the main site's "Stay Connected" section. */}
+            {/* Connect band, on charcoal like the main site's "Stay Connected" section.
+
+                Animates on mount with everything else, not whileInView. Scroll-triggered was
+                the wrong call here: the band sits below the fold, so it stayed at opacity 0
+                until you happened to scroll far enough, which reads as the page still loading
+                rather than as a reveal. */}
             <motion.section
                 className="bg-usb-charcoal px-6 sm:px-8 py-16"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-100px' }}
-                transition={{ duration: 0.45, ease: 'easeOut' }}
+                {...fadeUp()}
             >
                 <div className="max-w-3xl mx-auto text-center">
                     <h2 className="font-heading font-bold text-3xl text-white mb-4">Connect with USB</h2>
