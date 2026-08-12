@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import AuthCard, { Banner } from '../components/ui/AuthCard.jsx';
+import Button from '../components/ui/Button.jsx';
+import Field from '../components/ui/Field.jsx';
+import PasswordField from '../components/ui/PasswordField.jsx';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -25,72 +28,68 @@ export default function LoginPage() {
     }
   };
 
+  // A reset link belongs next to a wrong-password error, but not next to the unverified-account
+  // one: resetting requires a verified email, so that user would request a code and never
+  // receive it. They need the verification mail instead.
+  const isVerificationError = error.toLowerCase().includes('verify your email');
+
   return (
-    <motion.div
-      className="min-h-screen pt-32 pb-16 px-6 flex items-start justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
-      <motion.div
-        className="w-full max-w-md bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-800 rounded-2xl p-8 card-hover"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-      >
-        <h1 className="text-3xl font-bold text-white mb-2">Log In</h1>
-        <p className="text-gray-400 mb-6">Sign in with your Purdue account.</p>
-
-        {error && (
-          <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Purdue Email</label>
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors"
-              placeholder="pete@purdue.edu"
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-400">Password</label>
-              <Link to="/forgot-password" className="text-xs text-green-400 hover:text-green-300 font-medium">
-                Forgot password?
+    <AuthCard title="Log In" subtitle="Sign in with your Purdue account.">
+      {error && (
+        <Banner tone="error">
+          {error}
+          {!isVerificationError && (
+            <>
+              {' '}
+              {/* Carries the typed address across so the reset page opens ready to send. */}
+              <Link
+                to="/forgot-password"
+                state={{ email }}
+                className="font-semibold underline underline-offset-2 hover:text-red-900"
+              >
+                Forgot your password?
               </Link>
-            </div>
-            <input
-              required
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg ${isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white hover:shadow-green-900/20'}`}
-          >
-            {isSubmitting ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
+            </>
+          )}
+        </Banner>
+      )}
 
-        <p className="text-sm text-gray-400 mt-6 text-center">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-green-400 hover:text-green-300 font-medium">
-            Sign up
-          </Link>
-        </p>
-      </motion.div>
-    </motion.div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Field
+          id="login-email"
+          label="Purdue Email"
+          required
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="pete@purdue.edu"
+        />
+
+        <PasswordField
+          id="login-password"
+          label="Password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          labelRight={
+            <Link to="/forgot-password" className="font-body text-xs font-semibold text-usb-charcoal hover:text-black underline">
+              Forgot password?
+            </Link>
+          }
+        />
+
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Logging in...' : 'Log In'}
+        </Button>
+      </form>
+
+      <p className="font-body text-sm text-usb-muted mt-6 text-center">
+        Don't have an account?{' '}
+        <Link to="/signup" className="font-semibold text-usb-charcoal underline">
+          Sign up
+        </Link>
+      </p>
+    </AuthCard>
   );
 }

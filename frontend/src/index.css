@@ -1,37 +1,43 @@
 @import "tailwindcss";
 
-/* Ensure the entire page has the dark background */
-html, body, #root {
-  background: linear-gradient(135deg, #111827 0%, #064e3b 50%, #000000 100%);
-  min-height: 100vh;
+/* Brand tokens lifted from the main USB site (purdueusb.com). Declared in an @theme block
+   rather than a tailwind.config.js because this is Tailwind v4: a JS config is no longer
+   auto-loaded, so tokens defined there emit no CSS at all. Everything here becomes a real
+   utility - bg-usb-gold, text-usb-charcoal, font-heading, and so on. */
+@theme {
+  /* The brand gold. Nav bar, footer, primary buttons, table headers, section gradients. */
+  --color-usb-gold: #FFCA44;
+  /* The real "black" of the design - body text, headings, and dark section backgrounds. */
+  --color-usb-charcoal: #333333;
+  /* Link text on gold surfaces. Black at 95% alpha, softer than pure #000. */
+  --color-usb-ink: #000000F2;
+  --color-usb-border: #9CA3AF;
+  --color-usb-rule: #E5E7EB;
+  --color-usb-zebra: #F9FAFB;
+  --color-usb-muted: #6B7280;
+  /* Page background. Warm off-white rather than #fff: cards are white, so a pure white page
+     left them with nothing to sit against and the whole thing read as one flat sheet. */
+  --color-usb-surface: #F8F7F3;
+
+  --font-heading: "Montserrat", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-body: "Raleway", system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--color-usb-surface);
 }
 
-/* Prevent white background from showing during scroll */
-html, body {
-  background-attachment: fixed;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-
-/* Ensure the root element also has the background */
-#root {
-  background-attachment: fixed;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-
-/* Optimized hover styles for cards */
-.card-hover {
-  border-width: 1px;
-  border-style: solid;
-  border-color: rgb(55, 65, 81);
-  box-shadow: none;
-  transition: border-color 0.5s cubic-bezier(0.04, 0.62, 0.23, 0.98), box-shadow 0.5s cubic-bezier(0.04, 0.62, 0.23, 0.98);
-}
-
-.card-hover:hover,
-.card-hover.active {
-  border-color: rgb(22, 163, 74);
+body {
+  font-family: var(--font-body);
+  color: var(--color-usb-charcoal);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

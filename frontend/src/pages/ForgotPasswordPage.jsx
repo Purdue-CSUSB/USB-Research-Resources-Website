@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthCard, { Banner } from '../components/ui/AuthCard.jsx';
+import Button from '../components/ui/Button.jsx';
+import Field from '../components/ui/Field.jsx';
+import PasswordField from '../components/ui/PasswordField.jsx';
 
 export default function ForgotPasswordPage() {
   const { requestPasswordReset, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [step, setStep] = useState('request');
-  const [email, setEmail] = useState('');
+  // Prefilled when arriving from a failed login, so the address doesn't have to be typed twice.
+  // Not auto-submitted: landing on a page should never send mail on the user's behalf.
+  const [email, setEmail] = useState(location.state?.email ?? '');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,8 +39,10 @@ export default function ForgotPasswordPage() {
     setError('');
     setIsSubmitting(true);
     try {
+      // resetPassword signs them in, so send them to the board rather than back to an empty
+      // login form to type the password they just chose.
       await resetPassword(email, code, newPassword);
-      navigate('/login');
+      navigate('/projects');
     } catch (err) {
       setError(err.message || 'Failed to reset password.');
     } finally {
@@ -53,120 +61,77 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  if (step === 'request') {
+    return (
+      <AuthCard title="Forgot Password" subtitle="Enter your Purdue email and we'll send you a reset code.">
+        <Banner tone="error">{error}</Banner>
+
+        <form onSubmit={handleRequest} className="space-y-5">
+          <Field
+            id="reset-email"
+            label="Purdue Email"
+            required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="pete@purdue.edu"
+          />
+          <Button type="submit" fullWidth disabled={isSubmitting}>
+            {isSubmitting ? 'Sending...' : 'Send Reset Code'}
+          </Button>
+        </form>
+
+        <p className="font-body text-sm text-usb-muted mt-6 text-center">
+          Remembered it?{' '}
+          <Link to="/login" className="font-semibold text-usb-charcoal underline">
+            Log in
+          </Link>
+        </p>
+      </AuthCard>
+    );
+  }
+
   return (
-    <motion.div
-      className="min-h-screen pt-32 pb-16 px-6 flex items-start justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
+    <AuthCard
+      title="Reset Password"
+      subtitle={<>Enter the code sent to <span className="font-semibold text-usb-charcoal">{email}</span> and a new password.</>}
     >
-      <motion.div
-        className="w-full max-w-md bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-800 rounded-2xl p-8 card-hover"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
+      <Banner tone="error">{error}</Banner>
+      <Banner tone="success">{info}</Banner>
+
+      <form onSubmit={handleReset} className="space-y-5">
+        <Field
+          id="reset-code"
+          label="Reset Code"
+          required
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          controlClassName="text-center tracking-[0.5em]"
+          placeholder="------"
+        />
+        <PasswordField
+          id="reset-password"
+          label="New Password"
+          required
+          minLength={8}
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="At least 8 characters"
+        />
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Resetting...' : 'Reset Password'}
+        </Button>
+      </form>
+
+      <button
+        onClick={handleResend}
+        className="font-body text-sm text-usb-muted hover:text-usb-charcoal mt-6 w-full text-center transition-colors cursor-pointer"
       >
-        {step === 'request' ? (
-          <>
-            <h1 className="text-3xl font-bold text-white mb-2">Forgot Password</h1>
-            <p className="text-gray-400 mb-6">Enter your Purdue email and we'll send you a reset code.</p>
-
-            {error && (
-              <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleRequest} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Purdue Email</label>
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="pete@purdue.edu"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg ${isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white hover:shadow-green-900/20'}`}
-              >
-                {isSubmitting ? 'Sending...' : 'Send Reset Code'}
-              </button>
-            </form>
-
-            <p className="text-sm text-gray-400 mt-6 text-center">
-              Remembered it?{' '}
-              <Link to="/login" className="text-green-400 hover:text-green-300 font-medium">
-                Log in
-              </Link>
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
-            <p className="text-gray-400 mb-6">
-              Enter the code sent to <span className="text-white">{email}</span> and a new password.
-            </p>
-
-            {error && (
-              <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-            {info && (
-              <div className="mb-4 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm">
-                {info}
-              </div>
-            )}
-
-            <form onSubmit={handleReset} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Reset Code</label>
-                <input
-                  required
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-center tracking-[0.5em] focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="------"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">New Password</label>
-                <input
-                  required
-                  type="password"
-                  minLength={8}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="At least 8 characters"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg ${isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white hover:shadow-green-900/20'}`}
-              >
-                {isSubmitting ? 'Resetting...' : 'Reset Password'}
-              </button>
-            </form>
-
-            <button
-              onClick={handleResend}
-              className="text-sm text-gray-400 hover:text-green-400 mt-6 w-full text-center transition-colors"
-            >
-              Didn't get a code? Resend
-            </button>
-          </>
-        )}
-      </motion.div>
-    </motion.div>
+        Didn't get a code? Resend
+      </button>
+    </AuthCard>
   );
 }

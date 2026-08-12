@@ -1,28 +1,40 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Calendar, HelpCircle, Building2, Presentation, Code, Home, Menu, X, Beaker, User, LogOut, LogIn, ChevronDown, Settings } from 'lucide-react'
+import { Menu, X, User, LogOut, LogIn, ChevronDown, Settings } from 'lucide-react'
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext.jsx'
+import UnderlineSwipe from './ui/UnderlineSwipe.jsx'
 
 // Minimum breathing room between the wordmark and the link row before we are
 // willing to lay them out side by side.
 const ROW_GAP = 24
 
+// Text-only, like the main USB site's nav. Dropping the icons this row used to carry is also
+// what makes seven links plus an account menu fit before the hamburger has to take over.
 const navLinks = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/faq', icon: HelpCircle, label: 'FAQ' },
-    { path: '/organizations-and-programs', icon: Building2, label: 'Programs' },
-    { path: '/cs-specific-research', icon: Code, label: 'CS Research' },
-    { path: '/presenting-your-research', icon: Presentation, label: 'Presenting' },
-    { path: '/projects', icon: Beaker, label: 'Projects' },
-    { path: '/calendar', icon: Calendar, label: 'Calendar' }
+    { path: '/', label: 'Home' },
+    { path: '/faq', label: 'FAQ' },
+    { path: '/organizations-and-programs', label: 'Programs' },
+    { path: '/cs-specific-research', label: 'CS Research' },
+    { path: '/presenting-your-research', label: 'Presenting' },
+    { path: '/projects', label: 'Projects' },
+    { path: '/calendar', label: 'Calendar' }
 ]
 
-// One shared pill so every item in the row — links, log in, the account menu —
-// is the same height and sits on the same baseline. Nothing here scales or
-// shifts on hover/active, so the row can never knock itself out of alignment.
-const itemClass = (active) =>
-    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium leading-5 whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${active ? 'bg-green-600 text-white' : 'text-gray-300 hover:bg-green-600/30 hover:text-green-300'}`
+// One shared recipe so every item in the row - links, log in, the account menu - is the same
+// height and sits on the same baseline. Nothing here scales or shifts on hover/active, so the
+// row can never knock itself out of alignment; the hover feedback is the underline instead.
+// Sized up to fill the row now that the square brand mark and the outbound link have freed
+// space; the row is measured below, so this is the largest type that still keeps all seven
+// links plus the account control on one line at a typical laptop width.
+const linkClass =
+    'group inline-flex items-center px-2 py-2 font-body text-base text-usb-ink whitespace-nowrap rounded-md outline-none focus-visible:ring-2 focus-visible:ring-black/60'
+
+// Controls (the account button, the hamburger) get a subtle wash on hover since they have no
+// text to underline.
+const controlClass =
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-body font-semibold text-base text-usb-ink whitespace-nowrap transition-colors duration-200 hover:bg-black/10 outline-none focus-visible:ring-2 focus-visible:ring-black/60 cursor-pointer'
 
 export default function NavBar() {
     const location = useLocation()
@@ -120,61 +132,69 @@ export default function NavBar() {
         setIsMenuOpen(false)
     }
 
+    // The active page keeps its underline permanently drawn instead of getting a filled pill.
+    // On a gold bar a filled state would have to introduce a colour the main site doesn't use.
+    const navLabel = (label, active) => (
+        <span className={`relative ${active ? 'font-bold' : 'font-semibold'}`}>
+            {label}
+            <UnderlineSwipe color="ink" active={active} />
+        </span>
+    )
+
     return (
         <motion.nav
-            className="fixed top-0 left-0 right-0 bg-black/50 backdrop-blur-sm border-b border-gray-700 z-50"
+            className="fixed top-0 left-0 right-0 bg-usb-gold shadow-lg z-50"
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                <div ref={rowRef} className={`relative flex items-center justify-between h-[72px] ${isCompact ? 'gap-4' : 'gap-6'}`}>
+                <div ref={rowRef} className={`relative flex items-center justify-between h-20 ${isCompact ? 'gap-4' : 'gap-6'}`}>
                     <Link
                         ref={brandRef}
                         to="/"
-                        className="flex items-center gap-3 min-w-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                        className="flex items-center gap-3 min-w-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-black/60"
                         onClick={closeMenu}
                     >
+                        {/* The square icon mark rather than the long logo: it's the same art
+                            purdueusb.com uses as its favicon, and it costs a third of the
+                            width, which is what lets the link row run at full size. */}
                         <img
-                            src="./Purdue%20USB%20Research%20Resources.png"
-                            alt="USB Research Resources Icon"
-                            className="w-10 h-10 shrink-0 object-contain"
+                            src="/usb/usb-icon.webp"
+                            alt="Purdue USB"
+                            className="h-10 w-10 shrink-0 object-contain"
                             draggable={false}
                         />
-                        {/* The truncate is a last resort — the step down under
+                        {/* The truncate is a last resort - the step down under
                             360px is what keeps the wordmark whole on the
                             narrowest phones. */}
                         <span
                             ref={brandTextRef}
-                            className="font-bold text-white select-none text-base sm:text-lg max-[359px]:text-sm truncate"
+                            className="font-heading font-bold text-usb-ink select-none text-base sm:text-lg max-[359px]:text-sm truncate"
                         >
-                            USB Research Resources
+                            Research Resources
                         </span>
                     </Link>
 
-                    <div ref={linksRef} className={`${isCompact ? 'hidden' : 'flex'} items-center gap-1`}>
-                        {navLinks.map((item) => {
-                            const Icon = item.icon
-                            return (
-                                <Link key={item.path} to={item.path} className={itemClass(isActive(item.path))}>
-                                    <Icon className="w-4 h-4 shrink-0" />
-                                    <span>{item.label}</span>
-                                </Link>
-                            )
-                        })}
+                    <div ref={linksRef} className={`${isCompact ? 'hidden' : 'flex'} items-center gap-2`}>
+                        {navLinks.map((item) => (
+                            <Link key={item.path} to={item.path} className={linkClass}>
+                                {navLabel(item.label, isActive(item.path))}
+                            </Link>
+                        ))}
 
                         {isAuthenticated ? (
                             <div className="relative" ref={userMenuRef}>
                                 <button
                                     onClick={() => setIsUserMenuOpen((open) => !open)}
-                                    className={itemClass(isActive('/account'))}
+                                    className={controlClass}
                                     title={username}
                                     aria-expanded={isUserMenuOpen}
                                 >
                                     <User className="w-4 h-4 shrink-0" />
                                     {/* Usernames run to 80 characters. Capping the
                                         pill keeps a long one from pushing the whole
-                                        row past the point where it fits — the full
+                                        row past the point where it fits - the full
                                         name is in the dropdown below. */}
                                     <span className="max-w-20 truncate">{username}</span>
                                     <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
@@ -186,22 +206,22 @@ export default function NavBar() {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -8 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute right-0 top-full mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                                            className="absolute right-0 top-full mt-2 w-56 bg-white border border-usb-border rounded-lg shadow-xl overflow-hidden"
                                         >
-                                            <div className="px-4 py-3 border-b border-gray-700 text-sm font-medium text-gray-400 break-words">
+                                            <div className="px-4 py-3 border-b border-usb-rule font-body text-sm font-semibold text-usb-muted break-words">
                                                 {username}
                                             </div>
                                             <Link
                                                 to="/account"
                                                 onClick={() => setIsUserMenuOpen(false)}
-                                                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-300 hover:bg-green-600/30 hover:text-green-300 transition-colors duration-200"
+                                                className="flex items-center gap-2 px-4 py-3 font-body text-sm font-semibold text-usb-charcoal hover:bg-usb-gold/30 transition-colors duration-200"
                                             >
                                                 <Settings className="w-4 h-4 shrink-0" />
                                                 <span>Account</span>
                                             </Link>
                                             <button
                                                 onClick={handleLogout}
-                                                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-colors duration-200 w-full"
+                                                className="flex items-center gap-2 w-full px-4 py-3 font-body text-sm font-semibold text-usb-charcoal hover:bg-red-50 hover:text-red-700 transition-colors duration-200 cursor-pointer"
                                             >
                                                 <LogOut className="w-4 h-4 shrink-0" />
                                                 <span>Log Out</span>
@@ -211,7 +231,7 @@ export default function NavBar() {
                                 </AnimatePresence>
                             </div>
                         ) : (
-                            <Link to="/login" className={itemClass(isActive('/login'))}>
+                            <Link to="/login" className={controlClass}>
                                 <LogIn className="w-4 h-4 shrink-0" />
                                 <span>Log In</span>
                             </Link>
@@ -222,7 +242,7 @@ export default function NavBar() {
                         onClick={toggleMenu}
                         aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
                         aria-expanded={isMenuOpen}
-                        className={`${isCompact ? 'flex' : 'hidden'} items-center shrink-0 p-2 rounded-lg text-gray-300 hover:bg-green-600/20 hover:text-green-400 outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900`}
+                        className={`${isCompact ? 'flex' : 'hidden'} items-center shrink-0 p-2 rounded-lg text-usb-ink hover:bg-black/10 outline-none focus-visible:ring-2 focus-visible:ring-black/60 cursor-pointer`}
                         whileTap={{ scale: 0.9 }}
                     >
                         <AnimatePresence mode="wait" initial={false}>
@@ -234,7 +254,7 @@ export default function NavBar() {
                                     exit={{ rotate: 90, opacity: 0 }}
                                     transition={{ duration: 0.3 }}
                                 >
-                                    <X className="w-6 h-6" />
+                                    <X className="w-7 h-7" />
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -244,7 +264,7 @@ export default function NavBar() {
                                     exit={{ rotate: -90, opacity: 0 }}
                                     transition={{ duration: 0.3 }}
                                 >
-                                    <Menu className="w-6 h-6" />
+                                    <Menu className="w-7 h-7" />
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -254,69 +274,60 @@ export default function NavBar() {
                 <AnimatePresence>
                     {isMenuOpen && isCompact && (
                         <motion.div
-                            className="overflow-hidden border-t border-gray-700 -mx-4 px-4 sm:-mx-6 sm:px-6 bg-black/60"
+                            className="overflow-hidden border-t border-black/10 -mx-4 sm:-mx-6 bg-usb-gold"
                             initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
+                            animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.3 }}
                         >
                             {/* Capped so a short landscape window can still scroll the panel. */}
-                            <div className="flex flex-col gap-1 py-4 max-h-[calc(100vh-72px)] overflow-y-auto">
-                                {navLinks.map((item, index) => {
-                                    const Icon = item.icon
-                                    return (
-                                        <motion.div
-                                            key={item.path}
-                                            initial={{ x: -20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: index * 0.06, duration: 0.3 }}
-                                        >
-                                            <Link
-                                                to={item.path}
-                                                className={`${itemClass(isActive(item.path))} px-4 py-3`}
-                                                onClick={closeMenu}
-                                            >
-                                                <Icon className="w-4 h-4 shrink-0" />
-                                                <span>{item.label}</span>
-                                            </Link>
-                                        </motion.div>
-                                    )
-                                })}
-
-                                <div className="flex flex-col gap-1 pt-2 mt-2 border-t border-gray-700">
-                                    {isAuthenticated ? (
-                                        <>
-                                            <div className="flex items-center gap-2 px-4 py-3 text-sm font-medium leading-5 text-gray-400">
-                                                <User className="w-4 h-4 shrink-0" />
-                                                <span className="truncate">{username}</span>
-                                            </div>
-                                            <Link
-                                                to="/account"
-                                                onClick={closeMenu}
-                                                className={`${itemClass(isActive('/account'))} px-4 py-3`}
-                                            >
-                                                <Settings className="w-4 h-4 shrink-0" />
-                                                <span>Account</span>
-                                            </Link>
-                                            <button
-                                                onClick={handleLogout}
-                                                className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium leading-5 text-gray-300 hover:bg-red-600/30 hover:text-red-300 transition-colors duration-200 w-full outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
-                                            >
-                                                <LogOut className="w-4 h-4 shrink-0" />
-                                                <span>Log Out</span>
-                                            </button>
-                                        </>
-                                    ) : (
+                            <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto">
+                                {navLinks.map((item, index) => (
+                                    <motion.div
+                                        key={item.path}
+                                        initial={{ x: -20, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: index * 0.06, duration: 0.3 }}
+                                    >
                                         <Link
-                                            to="/login"
+                                            to={item.path}
+                                            className="group block px-6 py-4 font-body text-lg text-usb-ink border-b border-black/10 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/60"
                                             onClick={closeMenu}
-                                            className={`${itemClass(isActive('/login'))} px-4 py-3`}
                                         >
-                                            <LogIn className="w-4 h-4 shrink-0" />
-                                            <span>Log In</span>
+                                            {navLabel(item.label, isActive(item.path))}
                                         </Link>
-                                    )}
-                                </div>
+                                    </motion.div>
+                                ))}
+
+                                {isAuthenticated ? (
+                                    <>
+                                        {/* No username row here - the panel is a list of
+                                            destinations, and "Account" already says where it
+                                            goes. The desktop dropdown still shows it. */}
+                                        <Link
+                                            to="/account"
+                                            onClick={closeMenu}
+                                            className="group block px-6 py-4 font-body text-lg text-usb-ink border-b border-black/10 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/60"
+                                        >
+                                            {navLabel('Account', isActive('/account'))}
+                                        </Link>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex items-center gap-2 w-full px-6 py-4 font-body text-lg font-semibold text-usb-ink text-left hover:bg-black/10 transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/60 cursor-pointer"
+                                        >
+                                            <LogOut className="w-5 h-5 shrink-0" />
+                                            <span>Log Out</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <Link
+                                        to="/login"
+                                        onClick={closeMenu}
+                                        className="group block px-6 py-4 font-body text-lg text-usb-ink outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/60"
+                                    >
+                                        {navLabel('Log In', isActive('/login'))}
+                                    </Link>
+                                )}
                             </div>
                         </motion.div>
                     )}

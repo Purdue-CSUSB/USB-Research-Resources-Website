@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { clearCache } from '../lib/apiCache.js';
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'usb_auth';
@@ -42,6 +43,17 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     authRef.current = auth;
   }, [auth]);
+
+  // Drop every cached response when the signed-in account changes. Handling it here covers all
+  // four ways that happens - login, email verification, logout, and authFetch clearing an
+  // expired session on a 401 - instead of remembering to call it at each one.
+  const accountKey = auth?.user?.email ?? null;
+  const previousAccountKey = useRef(accountKey);
+  useEffect(() => {
+    if (previousAccountKey.current === accountKey) return;
+    previousAccountKey.current = accountKey;
+    clearCache();
+  }, [accountKey]);
 
   /**
    * fetch() for endpoints that require a login: attaches the bearer token, and treats a 401 as
@@ -117,13 +129,17 @@ export function AuthProvider({ children }) {
     return parseResponse(response);
   };
 
+  // Establishes a session, like login and verifyEmail: the endpoint returns { token, user }
+  // because completing a reset already proves control of the account's inbox.
   const resetPassword = async (email, code, newPassword) => {
     const response = await fetch('/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code, newPassword })
     });
-    return parseResponse(response);
+    const data = await parseResponse(response);
+    setAuth(data);
+    return data;
   };
 
   const logout = () => setAuth(null);

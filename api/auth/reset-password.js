@@ -7,6 +7,8 @@ import {
   codeMatches,
   isAllowedEmail,
   normalizeEmail,
+  publicUser,
+  signToken,
 } from '../../backend/lib/auth.js';
 
 const MAX_PASSWORD_LENGTH = 72;
@@ -68,5 +70,13 @@ export default withErrorHandling('auth:resetPassword', async (req, res) => {
     }
   );
 
-  return res.status(200).json({ message: 'Password reset. You can now log in.' });
+  // Sign them straight in rather than sending them back to an empty login form. Getting here
+  // required a code delivered to the account's own inbox plus a new password, which is the same
+  // bar verify-email clears before it issues a token - and the account is necessarily verified,
+  // since an unverified one is rejected above.
+  return res.status(200).json({
+    message: 'Password reset.',
+    token: signToken(user),
+    user: publicUser({ ...user, passwordHash })
+  });
 });

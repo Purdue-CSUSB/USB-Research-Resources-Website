@@ -1,59 +1,47 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Check, AlertTriangle } from 'lucide-react';
+import ModalShell from './ui/ModalShell.jsx';
+import Button from './ui/Button.jsx';
 
 // Site-styled replacement for the browser's native alert() used after a project submission.
 // Pass `result` = { type: 'success' | 'error', title, message } to open it, or null to close.
+//
+// Laid out like the Post a Project modal - square icon tile beside the title, body, then a
+// ruled footer with the action on the right - so the two dialogs read as the same component.
+// The old pastel circle badge and washed-out grey button weren't an idiom used anywhere else
+// on the site.
 const ResultModal = ({ result, onClose }) => {
   const isSuccess = result?.type === 'success';
 
-  const accent = isSuccess
-    ? {
-        border: 'border-green-600/40',
-        badge: 'bg-green-500/15 text-green-400 border-green-500/30',
-        button: 'bg-green-600 hover:bg-green-500 text-white',
-        icon: '✓'
-      }
-    : {
-        border: 'border-red-600/40',
-        badge: 'bg-red-500/15 text-red-400 border-red-500/30',
-        button: 'bg-gray-700 hover:bg-gray-600 text-white',
-        icon: '✕'
-      };
+  // Brand tokens only - gold and charcoal - so this reads as part of the site rather than as
+  // a generic alert box. The two states stay distinguishable by inverting the tile, which is
+  // the same pairing the darkGold buttons use, and the icon carries the meaning. The tile
+  // itself is the w-11 rounded-lg shape used on the CS Research cards and the account page.
+  const tone = isSuccess
+    ? { tile: 'bg-usb-gold text-usb-charcoal', Icon: Check }
+    : { tile: 'bg-usb-charcoal text-usb-gold', Icon: AlertTriangle };
 
   return (
-    <AnimatePresence>
-      {result && (
-        <motion.div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className={`bg-gray-900 border ${accent.border} rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-6 text-center`}
-            initial={{ opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.97 }}
-            transition={{ duration: 0.25 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border text-2xl font-bold ${accent.badge}`}>
-              {accent.icon}
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">{result.title}</h2>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">{result.message}</p>
-            <button
-              onClick={onClose}
-              className={`w-full px-6 py-2.5 rounded-lg font-semibold shadow-lg transition-colors ${accent.button}`}
-            >
-              OK
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <ModalShell
+      open={Boolean(result)}
+      onDismiss={onClose}
+      panelClassName="max-w-md border border-usb-border overflow-hidden flex flex-col max-h-[85vh]"
+    >
+      <div className="p-6 overflow-y-auto">
+        <div className="flex items-center gap-3 mb-3">
+          <span className={`w-11 h-11 shrink-0 rounded-lg flex items-center justify-center ${tone.tile}`}>
+            <tone.Icon className="w-5 h-5" />
+          </span>
+          <h2 className="font-heading font-bold text-xl text-usb-charcoal">{result?.title}</h2>
+        </div>
+        <p className="font-body text-usb-charcoal leading-relaxed">{result?.message}</p>
+      </div>
+      <div className="px-6 py-4 border-t border-usb-rule flex justify-end shrink-0">
+        {/* The site's standard gold CTA - this only dismisses, so it needs no danger styling. */}
+        <Button size="sm" onClick={onClose} className="min-w-24">
+          OK
+        </Button>
+      </div>
+    </ModalShell>
   );
 };
 
