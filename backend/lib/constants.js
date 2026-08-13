@@ -16,6 +16,6 @@ export const PROJECT_LIMIT = 3;
 // The shared Google Calendar: the scraper writes events to it and the Calendar page embeds it.
 // Public by design - it's visible in the embed URL any visitor can read.
 export const GOOGLE_CALENDAR_ID =
-  '88217dfcf4bcf746ad4132d93a9e0047a0c75e246d22dcb07fd75a8798ba0e65@group.calendar.google.com';
+  '04165af12aa6a32e489954a33c67ea5abde441448456f1e8cbfecb34306aae16@group.calendar.google.com';
 
 export const CALENDAR_TIMEZONE = 'America/Indiana/Indianapolis';
