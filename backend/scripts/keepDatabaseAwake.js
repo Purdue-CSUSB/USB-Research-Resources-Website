@@ -66,8 +66,18 @@ async function pingOnce(url) {
   return data.length;
 }
 
+// SITE_URL is typed by hand into a GitHub repository variable, and a bare hostname is the easy
+// mistake to make there. fetch() needs an ABSOLUTE url, so 'example.com' throws 'Failed to parse
+// URL' and the whole run fails before it ever reaches Atlas - which looks alarmingly like the
+// site being down. Assume https rather than failing over seven missing characters. The trailing
+// slash is stripped because SITE_URL is also pasted with one, which would give a double slash.
+function normalizeBaseUrl(raw) {
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export async function runKeepAlive() {
-  const baseUrl = requireEnv('SITE_URL').replace(/\/+$/, '');
+  const baseUrl = normalizeBaseUrl(requireEnv('SITE_URL'));
   const url = `${baseUrl}${ENDPOINT}`;
   console.log(`GET ${url}`);
 
